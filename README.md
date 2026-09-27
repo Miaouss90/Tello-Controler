@@ -69,6 +69,8 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 - [x] Xbox controller detected over Bluetooth
 - [x] 4 axes in the right direction (left = yaw/throttle, right = roll/pitch)
 - [x] Stick held steady keeps its command (not reset after 250 ms)
+- [x] Hover stability back to normal with v0.5.4+ (in-order `rc` sending)
+- [ ] Sticks released: HUD indicator dots grey and centered (no controller drift above the dead-zone)
 - [ ] Controller switched off while pushing a stick → command back to neutral
 - [ ] Y cycles Slow / Normal / Sport and the difference is felt
 - [ ] Dead-zone slider changes stick feel
@@ -117,8 +119,8 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 - [ ] Pad columns filled in the flight log
 
 ### Target tracking
-- [ ] Tap a textured object in the video → green box on it; a flat area shows "Nothing to track there"
-- [ ] Box follows when the object or the drone moves slowly; TARGET % stays high
+- [x] Tap a textured object in the video → green box on it; a flat area shows "Nothing to track there"
+- [x] Box follows when the object or the drone moves slowly; TARGET % stays high
 - [ ] Object hidden → red "TARGET LOST", box re-acquires when it comes back
 - [ ] Long-press on the video or ✕ TARGET clears it
 - [ ] Video stays smooth while tracking (no added lag)

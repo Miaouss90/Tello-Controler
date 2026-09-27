@@ -108,7 +108,7 @@ The feature that makes the app original rather than a remote-control clone.
 | Frame pipeline from the decoder for on-device vision (PixelCopy 240×180, 10 Hz, vision thread) | ✅ | ⬜ |
 | QR / ArUco detection | ⬜ | ⬜ |
 | Color recognition | ⬜ | ⬜ |
-| Target tracking preview: tap to select, tracked box, lost/re-acquire (NCC template matching) | ✅ | ⬜ |
+| Target tracking preview: tap to select, tracked box, lost/re-acquire (NCC template matching) | ✅ | 🟡 select + follow box ok; lost/re-acquire untested |
 | **Follow target**: gentle yaw/altitude corrections keep it centered, sticks override | ✅ | ⬜ |
 | Person tracking | ⬜ | ⬜ |
 | Orbit mode around a selected target (radius/speed) | ⬜ | ⬜ |
