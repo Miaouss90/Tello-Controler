@@ -1,7 +1,8 @@
 # Roadmap
 
-Milestones are **named**, not version numbers: the app version (`0.4.<build>`) only drives in-app updates.
+Milestones are **named**, not version numbers: the app version (`0.5.x`) only drives in-app updates.
 Each item has two statuses — nothing counts as done for flight until it is validated on a real Tello EDU.
+The step-by-step checks live in [README › Hardware checklist](README.md#hardware-checklist).
 
 **Legend:** ✅ done · ⬜ to do · 🟡 partially validated · — not applicable
 
@@ -11,7 +12,7 @@ Best "wow / effort" ratio, in order (Slow/Normal/Sport rates already shipped):
 2. ~~Rich FPV HUD (M3)~~ — coded, awaiting hardware check.
 3. ~~Controller rumble on alerts (M4)~~ — validated (arming, Wi-Fi loss).
 4. ~~Video + telemetry recording, flight recorder (M5)~~ — coded, awaiting hardware check.
-5. Mission Pads (M6).
+5. ~~Mission Pads (M6)~~ — detection coded, awaiting hardware check.
 6. Visual target tracking (M7).
 7. Mission editor (M6).
 
@@ -89,7 +90,7 @@ Everything `docs/SAFETY.md` requires before flying, plus the bench test that val
 ## M6 — Tello EDU missions
 | Item | Code | Hardware |
 |---|---|---|
-| Mission Pad telemetry (`mid`, `x/y/z`) and detection | ⬜ | ⬜ |
+| Mission Pad telemetry (`mid`, `x/y/z`) and detection (`mon`, HUD, flight log) | ✅ | ⬜ |
 | Mission editor timeline: takeoff → forward 1 m → rotate 90° → wait 2 s → photo → land | ⬜ | ⬜ |
 | Recorded sequences and predefined trajectories | ⬜ | ⬜ |
 | Distance limit / return to a central zone (needs Mission Pads for position) | ⬜ | ⬜ |

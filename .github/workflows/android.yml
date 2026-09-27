@@ -1,7 +1,7 @@
 name: Android CI
 
 # push/PR on main → tests + signed APK artifact.
-# push on main (i.e. every merge) → automatic GitHub Release v<base>.<run_number> with the APK,
+# push on main (i.e. every merge) → automatic GitHub Release v<base>.<n> (n = releases already in that line) with the APK,
 # which the app's UPDATE button downloads and installs.
 on:
   push:
@@ -36,7 +36,10 @@ jobs:
         id: version
         run: |
           base=$(grep '^telloVersionBase=' gradle.properties | cut -d= -f2)
-          echo "version=${base}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          git fetch --tags --force --quiet
+          patch=$(git tag -l "v${base}.*" | wc -l | tr -d ' ')
+          echo "version=${base}.${patch}" >> "$GITHUB_OUTPUT"
+          echo "TELLO_VERSION_NAME=${base}.${patch}" >> "$GITHUB_ENV"
 
       - name: Restore release signing key
         env:

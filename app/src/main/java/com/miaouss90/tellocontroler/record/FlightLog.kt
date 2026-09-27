@@ -9,7 +9,8 @@ import java.io.File
 /** Pure CSV format of the flight recorder: one row per sample or event. */
 object FlightLog {
     const val HEADER =
-        "t_ms,event,state,battery,height_cm,tof_cm,pitch,roll,yaw,vgx,vgy,vgz,motor_s,rc_roll,rc_pitch,rc_throttle,rc_yaw"
+        "t_ms,event,state,battery,height_cm,tof_cm,pitch,roll,yaw,vgx,vgy,vgz,motor_s,rc_roll,rc_pitch,rc_throttle,rc_yaw," +
+            "pad_id,pad_x_cm,pad_y_cm,pad_z_cm"
 
     fun row(elapsedMs: Long, event: String?, state: FlightState, t: TelloTelemetry, rc: RcInput): String =
         listOf(
@@ -17,6 +18,7 @@ object FlightLog {
             t.batteryPercent, t.heightCm, t.tofCm, t.pitch, t.roll, t.yaw,
             t.speedX, t.speedY, t.speedZ, t.flightTimeSeconds,
             rc.roll, rc.pitch, rc.throttle, rc.yaw,
+            t.missionPad?.id ?: "", t.missionPad?.xCm ?: "", t.missionPad?.yCm ?: "", t.missionPad?.zCm ?: "",
         ).joinToString(",")
 }
 

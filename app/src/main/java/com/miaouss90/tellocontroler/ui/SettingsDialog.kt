@@ -79,6 +79,10 @@ private fun SettingsDialog(
                 Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
                     SettingsColumn(Modifier.weight(1f)) {
                         FlightSettingsSection(settings, onSettingsChange)
+                        SectionTitle("Tello EDU")
+                        ToggleRow("Mission Pad detection (downward camera, shows pad id and position)", settings.missionPads) {
+                            onSettingsChange(settings.copy(missionPads = it))
+                        }
                         SectionTitle("Recording")
                         ToggleRow("Flight log (CSV per flight, saved in Download/TelloControler)", settings.flightLogs) {
                             onSettingsChange(settings.copy(flightLogs = it))

@@ -49,12 +49,78 @@ The Tello SDK endpoint is `192.168.10.1:8889`; state is received on UDP `8890` a
 
 RC values are normalized to the Tello `rc a b c d` range, with a configurable dead-zone (default 8 %) and rate profiles (Slow 35 %, Normal 65 %, Sport 100 %). Takeoff is refused without fresh telemetry or below the minimum battery (default 20 %). On-screen touch sticks appear automatically when no controller is connected (or always, via Settings); with a controller, the HUD shows the RC values actually sent. Axis directions were validated on a real Tello EDU; failsafes still need a hardware test (see ROADMAP).
 
+## Hardware checklist
+
+Checks to run on the real Tello EDU + phone. Ticked only when the owner reports a successful test
+(agents: add new checks with every hardware-dependent change, never tick them yourself).
+Props off first, then open space. Status mirrors the "Hardware" column of the [ROADMAP](ROADMAP.md).
+
+### Connection & link
+- [x] CONNECT locks the `TELLO-xxxx` Wi-Fi (system dialog) and the SDK answers
+- [x] Wi-Fi loss shows the red banner
+- [ ] Tello switched off then on → automatic reconnection (WIFI amber → green, TELLO green, video back)
+- [ ] Mobile data still works in another app while connected to the Tello
+- [ ] Second session: the Android Wi-Fi approval dialog is remembered (or note that it is not)
+- [ ] LINK LOST banner when telemetry stops, RECONNECT works
+
+### Controls
+- [x] Xbox controller detected over Bluetooth
+- [x] 4 axes in the right direction (left = yaw/throttle, right = roll/pitch)
+- [x] Stick held steady keeps its command (not reset after 250 ms)
+- [ ] Controller switched off while pushing a stick → command back to neutral
+- [ ] Y cycles Slow / Normal / Sport and the difference is felt
+- [ ] Dead-zone slider changes stick feel
+- [ ] Touch sticks appear without a controller and fly correctly
+- [ ] HUD stick indicators follow the controller
+
+### Flight & safety
+- [x] A takes off, B lands, flight state follows in the HUD
+- [ ] Short Menu press does nothing; Menu held 1 s = emergency motor stop
+- [ ] B during takeoff lands immediately
+- [ ] Takeoff refused below the battery minimum / without telemetry (message shown)
+- [ ] Landing detected ~3 s after touchdown (TAKE OFF available again), `MOTOR` counter frozen on the ground
+- [ ] Drone lifted by hand → TAKE OFF stays available; MARK LANDED appears if the state gets stuck
+- [ ] Low-battery auto-landing reflected in the flight state
+
+### Video
+- [x] Live video displayed
+- [ ] No stretching on a wide phone (4:3 with side bands)
+- [ ] Fewer / no pixel artifacts, including at distance
+- [ ] Latency measured (film a stopwatch through the app): ____ ms
+
+### HUD
+- [ ] Artificial horizon tilts the right way (roll) and moves the right way (pitch)
+- [ ] Heading tape turns with yaw
+- [ ] SPD / V/S plausible (units and sign), TIME runs in flight and resets on landing
+- [ ] HUD toggles in Settings work
+
+### Alerts
+- [x] Menu hold → single rumble
+- [x] Wi-Fi loss → triple rumble
+- [ ] Battery low / critical in flight → rumble + HUD notice
+
+### Recording
+- [ ] Photo (X / PHOTO) appears in Gallery › Pictures/TelloControler
+- [ ] 10 s video (View / REC) plays in the Gallery (Movies/TelloControler)
+- [ ] Flight log CSV in Download/TelloControler after a flight, columns filled
+
+### Mission Pads (Tello EDU)
+- [ ] Settings › Mission Pad detection enabled → no error message
+- [ ] Hovering over a pad shows `PAD #n x y z` in the HUD, values change when moving
+- [ ] Pad columns filled in the flight log
+
+### App & updates
+- [ ] Settings page readable in landscape (two columns)
+- [ ] Settings kept after restarting the app
+- [ ] UPDATE installs the next release (phone on a Wi-Fi with Internet)
+- [ ] Screen stays on during a flight
+
 ## Build, release & update
 
 Everything is automated by GitHub Actions — **Android Studio is not required**.
 
 - **Every push / pull request** runs the unit tests and builds a signed APK (workflow artifact).
-- **Every push to `main`** publishes a GitHub Release `v0.4.<build>` with the APK.
+- **Every push to `main`** publishes a GitHub Release `v0.5.0`, `v0.5.1`… with the APK.
 - **On the phone:** Settings → **UPDATE** downloads the latest release and installs it (phone on a Wi-Fi with Internet, not the Tello Wi-Fi). Android asks once to allow the app to install updates.
 
 **First install:** open the [latest release](https://github.com/Miaouss90/Tello-Controler/releases/latest) on the phone, download the APK and open it. Builds up to v0.2.0 were signed with a throw-away debug key: uninstall that version once before installing v0.3 or later.
@@ -65,6 +131,7 @@ Everything is automated by GitHub Actions — **Android Studio is not required**
 - [Architecture](docs/ARCHITECTURE.md)
 - [Safety](docs/SAFETY.md)
 - [Roadmap](ROADMAP.md)
+- [Changelog](CHANGELOG.md)
 - [Contributing](CONTRIBUTING.md)
 - [AI agent guide](AGENTS.md)
 

@@ -18,6 +18,7 @@ class SettingsRepository(context: Context) {
         const val KEY_HUD_RETICLE = "hud_reticle"
         const val KEY_RUMBLE_ALERTS = "rumble_alerts"
         const val KEY_FLIGHT_LOGS = "flight_logs"
+        const val KEY_MISSION_PADS = "mission_pads"
     }
 
     private val prefs = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
@@ -37,6 +38,7 @@ class SettingsRepository(context: Context) {
             .putBoolean(KEY_HUD_RETICLE, next.hudReticle)
             .putBoolean(KEY_RUMBLE_ALERTS, next.rumbleAlerts)
             .putBoolean(KEY_FLIGHT_LOGS, next.flightLogs)
+            .putBoolean(KEY_MISSION_PADS, next.missionPads)
             .apply()
     }
 
@@ -52,6 +54,7 @@ class SettingsRepository(context: Context) {
             hudReticle = prefs.getBoolean(KEY_HUD_RETICLE, defaults.hudReticle),
             rumbleAlerts = prefs.getBoolean(KEY_RUMBLE_ALERTS, defaults.rumbleAlerts),
             flightLogs = prefs.getBoolean(KEY_FLIGHT_LOGS, defaults.flightLogs),
+            missionPads = prefs.getBoolean(KEY_MISSION_PADS, defaults.missionPads),
         ).sanitized()
     }
 }

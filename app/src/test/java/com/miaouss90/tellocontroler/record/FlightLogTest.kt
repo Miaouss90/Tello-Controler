@@ -2,6 +2,7 @@ package com.miaouss90.tellocontroler.record
 
 import com.miaouss90.tellocontroler.controller.RcInput
 import com.miaouss90.tellocontroler.flight.FlightState
+import com.miaouss90.tellocontroler.tello.MissionPad
 import com.miaouss90.tellocontroler.tello.TelloTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -14,7 +15,9 @@ class FlightLogTest {
     fun `row matches header columns and escapes commas`() {
         val row = FlightLog.row(1500, "alert, low", FlightState.FLYING, telemetry, RcInput(roll = 10, yaw = -5))
         assertEquals(FlightLog.HEADER.split(",").size, row.split(",").size)
-        assertEquals("1500,alert; low,FLYING,70,80,90,1,2,3,0,0,0,12,10,0,0,-5", row)
+        assertEquals("1500,alert; low,FLYING,70,80,90,1,2,3,0,0,0,12,10,0,0,-5,,,,", row)
+        val withPad = FlightLog.row(0, null, FlightState.FLYING, telemetry.copy(missionPad = MissionPad(2, 5, -6, 70)), RcInput.NEUTRAL)
+        assertEquals("2,5,-6,70", withPad.split(",").takeLast(4).joinToString(","))
     }
 
     @Test
