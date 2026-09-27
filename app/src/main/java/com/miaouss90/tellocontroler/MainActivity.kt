@@ -153,10 +153,10 @@ fun FlightScreen(vm:FlightViewModel){
                 if(!connected) Button(onClick={vm.connect()}){Text("CONNECT")}
                 Button(
                     enabled=connected,
-                    onClick={vm.takeoff},
+                    onClick={ vm.takeoff() },
                     colors=ButtonDefaults.buttonColors(containerColor=Green,contentColor=Night)
                 ){Text("A  TAKE OFF",fontWeight=FontWeight.Bold)}
-                OutlinedButton(enabled=connected,onClick={vm.land}){Text("B  LAND")}
+                OutlinedButton(enabled=connected,onClick={ vm.land() }){Text("B  LAND")}
             }
         }
     }
