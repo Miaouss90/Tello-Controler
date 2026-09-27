@@ -86,19 +86,19 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 - [x] A takes off, B lands, flight state follows in the HUD
 - [ ] Short Menu press does nothing; Menu held 1 s = emergency motor stop
 - [ ] B during takeoff lands immediately
-- [ ] Takeoff refused below the battery minimum / without telemetry (message shown)
-- [ ] Landing detected ~3 s after touchdown (TAKE OFF available again), `MOTOR` counter frozen on the ground
-- [ ] Drone lifted by hand → TAKE OFF stays available; MARK LANDED appears if the state gets stuck
-- [ ] Low-battery auto-landing reflected in the flight state
+- [X] Takeoff refused below the battery minimum / without telemetry (message shown)
+- [X] Landing detected ~3 s after touchdown (TAKE OFF available again), `MOTOR` counter frozen on the ground
+- [X] Drone lifted by hand → TAKE OFF stays available; MARK LANDED appears if the state gets stuck
+- [X] Low-battery auto-landing reflected in the flight state
 
 ### Video
 - [x] Live video displayed
-- [ ] No stretching on a wide phone (4:3 with side bands)
+- [X] No stretching on a wide phone (4:3 with side bands)
 - [ ] Fewer / no pixel artifacts, including at distance
 - [ ] Latency measured (film a stopwatch through the app): ____ ms
 
 ### HUD
-- [ ] Artificial horizon tilts the right way (roll) and moves the right way (pitch)
+- [X] Artificial horizon tilts the right way (roll) and moves the right way (pitch)
 - [ ] Heading tape turns with yaw
 - [ ] SPD / V/S plausible (units and sign), TIME runs in flight and resets on landing
 - [ ] HUD toggles in Settings work
@@ -106,12 +106,12 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 ### Alerts
 - [x] Menu hold → single rumble
 - [x] Wi-Fi loss → triple rumble
-- [ ] Battery low / critical in flight → rumble + HUD notice
+- [X] Battery low / critical in flight → rumble + HUD notice
 
 ### Recording
-- [ ] Photo (X / PHOTO) appears in Gallery › Pictures/TelloControler
-- [ ] 10 s video (View / REC) plays in the Gallery (Movies/TelloControler)
-- [ ] Flight log CSV in Download/TelloControler after a flight, columns filled
+- [X] Photo (X / PHOTO) appears in Gallery › Pictures/TelloControler
+- [X] 10 s video (View / REC) plays in the Gallery (Movies/TelloControler)
+- [X] Flight log CSV in Download/TelloControler after a flight, columns filled
 
 ### Mission Pads (Tello EDU)
 - [ ] Settings › Mission Pad detection enabled → no error message
@@ -119,9 +119,9 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 - [ ] Pad columns filled in the flight log
 
 ### Target tracking
-- [x] Tap a textured object in the video → green box on it; a flat area shows "Nothing to track there"
-- [x] Box follows when the object or the drone moves slowly; TARGET % stays high
-- [ ] Object hidden → red "TARGET LOST", box re-acquires when it comes back
+- [X] Tap a textured object in the video → green box on it; a flat area shows "Nothing to track there"
+- [X] Box follows when the object or the drone moves slowly; TARGET % stays high
+- [X] Object hidden → red "TARGET LOST", box re-acquires when it comes back
 - [ ] Long-press on the video or ✕ TARGET clears it
 - [ ] Video stays smooth while tracking (no added lag)
 - [ ] FOLLOW (RB / HUD) refused on the ground or without a locked target (message)
@@ -131,11 +131,11 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 - [ ] Wi-Fi loss / landing / B → follow off
 
 ### App & updates
-- [ ] Settings page full screen in landscape (not offset), two columns, back button closes it
+- [X] Settings page full screen in landscape (not offset), two columns, back button closes it
 - [ ] With Settings open, the controller still works (B lands)
 - [ ] Settings kept after restarting the app
-- [ ] UPDATE installs the next release (phone on a Wi-Fi with Internet)
-- [ ] Screen stays on during a flight
+- [X] UPDATE installs the next release (phone on a Wi-Fi with Internet)
+- [X] Screen stays on during a flight
 
 ## Build, release & update
 
