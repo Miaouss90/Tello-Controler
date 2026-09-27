@@ -42,6 +42,7 @@ The Tello SDK endpoint is `192.168.10.1:8889`; state is received on UDP `8890` a
 | Right stick Y | Pitch |
 | A | Takeoff |
 | B | Land (never blocked) |
+| RB | FOLLOW the selected target on/off (sticks always override) |
 | Y | Cycle rate: Slow / Normal / Sport |
 | X | Photo (saved in Pictures/TelloControler) |
 | View | Start / stop video recording (Movies/TelloControler) |
@@ -68,6 +69,8 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 - [x] Xbox controller detected over Bluetooth
 - [x] 4 axes in the right direction (left = yaw/throttle, right = roll/pitch)
 - [x] Stick held steady keeps its command (not reset after 250 ms)
+- [x] Hover stability back to normal with v0.5.4+ (in-order `rc` sending)
+- [ ] Sticks released: HUD indicator dots grey and centered (no controller drift above the dead-zone)
 - [ ] Controller switched off while pushing a stick → command back to neutral
 - [ ] Y cycles Slow / Normal / Sport and the difference is felt
 - [ ] Dead-zone slider changes stick feel
@@ -115,12 +118,17 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 - [ ] Hovering over a pad shows `PAD #n x y z` in the HUD, values change when moving
 - [ ] Pad columns filled in the flight log
 
-### Target tracking (vision only — the drone is not steered yet)
-- [ ] Tap a textured object in the video → green box on it; a flat area shows "Nothing to track there"
-- [ ] Box follows when the object or the drone moves slowly; TARGET % stays high
+### Target tracking
+- [x] Tap a textured object in the video → green box on it; a flat area shows "Nothing to track there"
+- [x] Box follows when the object or the drone moves slowly; TARGET % stays high
 - [ ] Object hidden → red "TARGET LOST", box re-acquires when it comes back
 - [ ] Long-press on the video or ✕ TARGET clears it
 - [ ] Video stays smooth while tracking (no added lag)
+- [ ] FOLLOW (RB / HUD) refused on the ground or without a locked target (message)
+- [ ] In a hover, FOLLOW turns toward a target moving left/right and climbs/descends to keep it centered (right direction!)
+- [ ] Any stick input takes over instantly; releasing the sticks resumes following
+- [ ] Target hidden > 2 s → "Follow off: target lost" + rumble, drone holds position
+- [ ] Wi-Fi loss / landing / B → follow off
 
 ### App & updates
 - [ ] Settings page full screen in landscape (not offset), two columns, back button closes it

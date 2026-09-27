@@ -214,6 +214,15 @@ fun FlightScreen(vm: FlightViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 if (visionActive) {
+                    val following by vm.followEngaged.collectAsState()
+                    Button(
+                        onClick = { vm.toggleFollow() },
+                        colors = if (following) {
+                            ButtonDefaults.buttonColors(containerColor = HudColors.Cyan, contentColor = HudColors.Night)
+                        } else {
+                            ButtonDefaults.outlinedButtonColors()
+                        },
+                    ) { Text(if (following) "RB  FOLLOWING" else "RB  FOLLOW", fontWeight = FontWeight.Bold) }
                     OutlinedButton(onClick = { vm.clearTarget() }) { Text("✕ TARGET") }
                 }
                 OutlinedButton(enabled = videoActive, onClick = { vm.requestPhoto() }) { Text("X  PHOTO") }

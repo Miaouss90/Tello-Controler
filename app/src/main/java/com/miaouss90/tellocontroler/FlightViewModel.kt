@@ -39,7 +39,9 @@ import com.miaouss90.tellocontroler.tello.TelloTelemetry
 import com.miaouss90.tellocontroler.tello.TelloVideoReceiver
 import com.miaouss90.tellocontroler.tello.TelloWifiManager
 import com.miaouss90.tellocontroler.tello.TelloWifiState
+import com.miaouss90.tellocontroler.vision.FollowController
 import com.miaouss90.tellocontroler.vision.GrayFrame
+import com.miaouss90.tellocontroler.vision.InputArbiter
 import com.miaouss90.tellocontroler.vision.TemplateTracker
 import com.miaouss90.tellocontroler.vision.TrackResult
 import kotlinx.coroutines.Dispatchers
@@ -72,6 +74,10 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         private const val NOTICE_MS = 4000L
         private const val MONITOR_PERIOD_MS = 250L
         private const val FLIGHT_LOG_PERIOD_MS = 100L
+        /** Follow ignores tracking results older than this (frames stopped, app paused…). */
+        private const val TARGET_FRESH_MS = 500L
+        /** Follow disengages after the target has been lost or stale this long. */
+        private const val FOLLOW_GIVE_UP_MS = 2000L
     }
 
     private val client = TelloClient()
@@ -146,6 +152,12 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _target = MutableStateFlow<TrackResult?>(null)
     val target = _target.asStateFlow()
+    @Volatile private var targetAt = 0L
+    @Volatile private var targetSeenAt = 0L
+
+    /** FOLLOW: the aircraft turns/climbs to keep the target centered while the pilot does not touch the sticks. */
+    private val _followEngaged = MutableStateFlow(false)
+    val followEngaged = _followEngaged.asStateFlow()
 
     /** The UI owns the SurfaceView, so it performs the frame grab when asked. */
     private val _photoRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -221,6 +233,7 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
             while (isActive) {
                 _videoLink.value = videoMonitor.quality()
                 checkMotorsStopped()
+                superviseFollow()
                 delay(MONITOR_PERIOD_MS)
             }
         }
@@ -411,6 +424,7 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun clearTarget() {
+        disengageFollow(null)
         clearTracker = true
         pendingSelection.set(null)
         _visionActive.value = false
@@ -432,7 +446,58 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         }
         if (!tracker.hasTarget || !_visionActive.value) return
         val result = tracker.track(frame)
-        if (_visionActive.value) _target.value = result
+        if (_visionActive.value) {
+            val now = System.currentTimeMillis()
+            _target.value = result
+            targetAt = now
+            if (!result.lost) targetSeenAt = now
+        }
+    }
+
+    /** RB / HUD FOLLOW. Only engages while flying with a locked target. */
+    fun toggleFollow() {
+        if (_followEngaged.value) return disengageFollow("Follow off")
+        val target = _target.value
+        when {
+            target == null || target.lost -> showNotice("Select a target first (tap the video)")
+            flightState.value != FlightState.FLYING -> showNotice("Follow works in flight only")
+            else -> {
+                targetSeenAt = System.currentTimeMillis()
+                _followEngaged.value = true
+                showNotice("FOLLOW on — any stick input takes over")
+                viewModelScope.launch(Dispatchers.IO) { recordFlightSample("follow:on") }
+            }
+        }
+    }
+
+    private fun disengageFollow(reason: String?) {
+        if (!_followEngaged.value) return
+        _followEngaged.value = false
+        reason?.let { showNotice(it) }
+        viewModelScope.launch(Dispatchers.IO) { recordFlightSample("follow:off") }
+    }
+
+    /** The follow command for now, or null when follow must not act (off, stale or lost target). */
+    private fun followCommand(): RcInput? {
+        if (!_followEngaged.value) return null
+        val target = _target.value ?: return null
+        if (System.currentTimeMillis() - targetAt > TARGET_FRESH_MS) return null
+        return FollowController.command(target)
+    }
+
+    /** SAFETY: follow stops on landing, link loss or a target lost for [FOLLOW_GIVE_UP_MS]. */
+    private fun superviseFollow() {
+        if (!_followEngaged.value) return
+        val reason = when {
+            flightState.value != FlightState.FLYING -> "Follow off: not flying"
+            connection.value != TelloConnectionState.CONNECTED -> "Follow off: link lost"
+            System.currentTimeMillis() - targetSeenAt > FOLLOW_GIVE_UP_MS -> "Follow off: target lost"
+            else -> null
+        }
+        if (reason != null) {
+            disengageFollow(reason)
+            if (settings.value.rumbleAlerts) ControllerRumble.play(FlightAlert.EMERGENCY_ARMING)
+        }
     }
 
     fun requestPhoto() {
@@ -496,10 +561,12 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         val axes = when {
             touchLeftActive || touchRightActive -> touchAxes
             _controllerConnected.value -> controllerAxes
-            else -> return
+            else -> null
         }
         val profile = FlightProfiles.resolve(s)
-        rcLoop.update(StickMapper.map(axes, s.deadZone, profile.scale, profile.expo))
+        val pilot = axes?.let { StickMapper.map(it, s.deadZone, profile.scale, profile.expo) }
+        // Pilot sticks always win; follow only acts while they are centered. Nothing to send ⇒ watchdog neutral.
+        InputArbiter.choose(pilot, followCommand())?.let { rcLoop.update(it) }
     }
 
     /**

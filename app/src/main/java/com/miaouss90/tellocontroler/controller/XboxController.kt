@@ -22,6 +22,7 @@ object XboxController {
     fun isLand(e: KeyEvent) = isFirstPress(e, KeyEvent.KEYCODE_BUTTON_B)
     fun isRateCycle(e: KeyEvent) = isFirstPress(e, KeyEvent.KEYCODE_BUTTON_Y)
     fun isPhoto(e: KeyEvent) = isFirstPress(e, KeyEvent.KEYCODE_BUTTON_X)
+    fun isFollowToggle(e: KeyEvent) = isFirstPress(e, KeyEvent.KEYCODE_BUTTON_R1)
 
     /** Xbox "View" button. */
     fun isRecordToggle(e: KeyEvent) = isFirstPress(e, KeyEvent.KEYCODE_BUTTON_SELECT)
