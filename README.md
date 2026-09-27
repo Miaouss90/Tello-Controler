@@ -4,13 +4,13 @@
 
 Native Android ground-control application for the **DJI/Ryze Tello EDU**, focused on low-latency manual flight, live video and Xbox controller support.
 
-> Status: **early V0.1 / hardware validation required**. Do not fly near people or obstacles until command mapping, failsafes and latency have been validated on the real aircraft.
+> Status: **M1 code complete / hardware validation required** (see [ROADMAP](ROADMAP.md)). Do not fly near people or obstacles until command mapping, failsafes and latency have been validated on the real aircraft.
 
 ## Product vision
 
 Tello-Controler turns an Android phone into a lightweight FPV control station. The phone connects to the Tello over Wi-Fi and to an Xbox controller over Bluetooth. The project deliberately uses native Android/Kotlin so networking, gamepad input and hardware H.264 decoding can use Android APIs directly.
 
-### V0.1 scope
+### M1 scope (first safe flight)
 - Tello SDK mode over UDP
 - Takeoff, land, emergency and RC control
 - Continuous Xbox stick input with dead-zone
@@ -41,20 +41,21 @@ The Tello SDK endpoint is `192.168.10.1:8889`; state is received on UDP `8890` a
 | Right stick X | Roll |
 | Right stick Y | Pitch |
 | A | Takeoff |
-| B | Land |
+| B | Land (never blocked) |
+| Y | Cycle rate: Slow / Normal / Sport |
 | Menu (hold 1 s) | Emergency motor stop — release early to cancel |
 
-RC values are normalized to the Tello `rc a b c d` range with a rescaled 8 % dead-zone. Axis directions are **not yet verified on hardware**. A configurable dead-zone and speed profiles are part of the roadmap.
+RC values are normalized to the Tello `rc a b c d` range, with a configurable dead-zone (default 8 %) and rate profiles (Slow 35 %, Normal 65 %, Sport 100 %). Takeoff is refused without fresh telemetry or below the minimum battery (default 20 %). Optional on-screen touch sticks are available in Settings. Axis directions are **not yet verified on hardware**.
 
 ## Build, release & update
 
 Everything is automated by GitHub Actions — **Android Studio is not required**.
 
 - **Every push / pull request** runs the unit tests and builds a signed APK (workflow artifact).
-- **Every push to `main`** publishes a GitHub Release `v0.3.<build>` with the APK.
+- **Every push to `main`** publishes a GitHub Release `v0.4.<build>` with the APK.
 - **On the phone:** Settings → **UPDATE** downloads the latest release and installs it (phone on a Wi-Fi with Internet, not the Tello Wi-Fi). Android asks once to allow the app to install updates.
 
-**First install:** open the [latest release](https://github.com/Miaouss90/Tello-Controler/releases/latest) on the phone, download the APK and open it. Builds up to v0.2.0 were signed with a throw-away debug key: uninstall that version once before installing v0.3+.
+**First install:** open the [latest release](https://github.com/Miaouss90/Tello-Controler/releases/latest) on the phone, download the APK and open it. Builds up to v0.2.0 were signed with a throw-away debug key: uninstall that version once before installing v0.3 or later.
 
 ## Documentation
 

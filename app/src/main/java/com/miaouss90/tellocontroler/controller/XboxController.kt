@@ -4,12 +4,12 @@ import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
 
-/** Android adapter: reads gamepad events and delegates the math to [StickMapper]. */
+/** Android adapter: reads gamepad events; the math lives in [StickMapper]. */
 object XboxController {
-    fun motion(e: MotionEvent): RcInput? {
+    fun axes(e: MotionEvent): StickAxes? {
         if (e.source and InputDevice.SOURCE_JOYSTICK != InputDevice.SOURCE_JOYSTICK) return null
         if (e.action != MotionEvent.ACTION_MOVE) return null
-        return StickMapper.map(
+        return StickAxes(
             leftX = e.getAxisValue(MotionEvent.AXIS_X),
             leftY = e.getAxisValue(MotionEvent.AXIS_Y),
             rightX = e.getAxisValue(MotionEvent.AXIS_Z),
@@ -17,9 +17,10 @@ object XboxController {
         )
     }
 
-    /** First press only: holding A/B must not re-send takeoff/land on key repeat. */
+    /** First press only: holding a button must not repeat its action. */
     fun isTakeoff(e: KeyEvent) = isFirstPress(e, KeyEvent.KEYCODE_BUTTON_A)
     fun isLand(e: KeyEvent) = isFirstPress(e, KeyEvent.KEYCODE_BUTTON_B)
+    fun isRateCycle(e: KeyEvent) = isFirstPress(e, KeyEvent.KEYCODE_BUTTON_Y)
 
     /** Menu / Start button; emergency requires holding it (see FlightViewModel). */
     fun isEmergencyButton(keyCode: Int) = keyCode == KeyEvent.KEYCODE_BUTTON_START

@@ -11,6 +11,7 @@ object HudColors {
     val Cyan = Color(0xFF58D6FF)
     val Green = Color(0xFF58E39B)
     val Red = Color(0xFFFF6B6B)
+    val Amber = Color(0xFFFFC857)
     val Muted = Color(0xFF8C99A8)
 }
 

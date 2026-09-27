@@ -5,29 +5,44 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
 
-/** Tello SDK UDP transport: commands on 8889, state on 8890. See docs/PROTOCOL.md. */
-class TelloClient {
+/**
+ * Tello SDK UDP transport: commands + acknowledgements on 8889, state on 8890. See docs/PROTOCOL.md.
+ *
+ * Acknowledged commands are serialized (one pending answer at a time). `emergency` and `rc` never wait,
+ * and `land` preempts a pending acknowledgement instead of queueing behind it.
+ */
+class TelloClient(clock: () -> Long = System::currentTimeMillis) {
     companion object {
         const val HOST = "192.168.10.1"
         const val COMMAND_PORT = 8889
         const val STATE_PORT = 8890
-        const val ACK_TIMEOUT_MS = 3000
+        const val ACK_TIMEOUT_MS = 3_000L
+        const val MOTION_ACK_TIMEOUT_MS = 20_000L
+        const val MONITOR_PERIOD_MS = 250L
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val host by lazy { InetAddress.getByName(HOST) }
-    private var commandSocket: DatagramSocket? = null
-    private var stateSocket: DatagramSocket? = null
+    private val responses = Channel<String>(Channel.UNLIMITED)
+    private val ackLock = Mutex()
+    private val stateMonitor = LinkMonitor(clock)
+
+    @Volatile private var commandSocket: DatagramSocket? = null
+    @Volatile private var stateSocket: DatagramSocket? = null
 
     private val _telemetry = MutableStateFlow(TelloTelemetry())
     val telemetry: StateFlow<TelloTelemetry> = _telemetry.asStateFlow()
@@ -38,21 +53,25 @@ class TelloClient {
     private val _lastResponse = MutableStateFlow("")
     val lastResponse: StateFlow<String> = _lastResponse.asStateFlow()
 
-    /** Enters SDK mode; CONNECTED only after the Tello acknowledges `command` with `ok`. */
+    private val _stateLink = MutableStateFlow(LinkQuality.NONE)
+    val stateLink: StateFlow<LinkQuality> = _stateLink.asStateFlow()
+
+    init {
+        scope.launch { monitorLink() }
+    }
+
+    /** Enters SDK mode; CONNECTED only after the Tello acknowledges `command` with `ok`. Also reconnects. */
     fun connect() {
         val state = _connection.value
         if (state == TelloConnectionState.CONNECTING || state == TelloConnectionState.CONNECTED) return
+        _connection.value = TelloConnectionState.CONNECTING
         scope.launch {
-            _connection.value = TelloConnectionState.CONNECTING
             try {
-                commandSocket?.close()
-                commandSocket = DatagramSocket().apply { soTimeout = ACK_TIMEOUT_MS }
-                val response = sendAndWait("command")
-                _lastResponse.value = response
-                if (response.trim().equals("ok", ignoreCase = true)) {
+                openSockets()
+                if (request("command", ACK_TIMEOUT_MS) == CommandResult.Ok) {
+                    stateMonitor.restart()
                     _connection.value = TelloConnectionState.CONNECTED
-                    launch { listenState() }
-                    send("streamon")
+                    request("streamon", ACK_TIMEOUT_MS)
                 } else {
                     _connection.value = TelloConnectionState.ERROR
                 }
@@ -62,50 +81,115 @@ class TelloClient {
         }
     }
 
-    fun rc(input: RcInput) =
-        send(TelloCommands.rc(input.roll, input.pitch, input.throttle, input.yaw))
+    fun rc(input: RcInput) = send(TelloCommands.rc(input.roll, input.pitch, input.throttle, input.yaw))
 
-    fun takeoff() = send("takeoff")
-    fun land() = send("land")
+    suspend fun takeoff() = request("takeoff", MOTION_ACK_TIMEOUT_MS)
+
+    suspend fun land() = request("land", MOTION_ACK_TIMEOUT_MS, preempt = true)
+
     fun emergency() = send("emergency")
 
-    fun send(command: String) {
-        scope.launch {
-            runCatching {
-                val data = command.toByteArray()
-                commandSocket?.send(DatagramPacket(data, data.size, host, COMMAND_PORT))
+    fun close() {
+        _connection.value = TelloConnectionState.DISCONNECTED
+        scope.cancel()
+        val command = commandSocket
+        val state = stateSocket
+        CoroutineScope(Dispatchers.IO).launch {
+            runCatching { command?.let { sendOn(it, TelloCommands.rc(0, 0, 0, 0)) } }
+            command?.close()
+            state?.close()
+        }
+    }
+
+    /**
+     * Sends [command] and waits for its answer. With [preempt], a busy ack channel does not delay the
+     * command: it is sent at once and reported as [CommandResult.Unconfirmed].
+     */
+    private suspend fun request(command: String, timeoutMs: Long, preempt: Boolean = false): CommandResult =
+        withContext(Dispatchers.IO) {
+            if (!ackLock.tryLock()) {
+                if (preempt) {
+                    sendRaw(command)
+                    return@withContext CommandResult.Unconfirmed
+                }
+                ackLock.lock()
+            }
+            try {
+                while (responses.tryReceive().isSuccess) Unit
+                sendRaw(command)
+                withTimeoutOrNull(timeoutMs) { responses.receive() }
+                    ?.let(TelloCommands::parseResponse)
+                    ?: CommandResult.Timeout
+            } finally {
+                ackLock.unlock()
+            }
+        }
+
+    private fun send(command: String) {
+        scope.launch { runCatching { sendRaw(command) } }
+    }
+
+    private fun sendRaw(command: String) {
+        commandSocket?.let { sendOn(it, command) }
+    }
+
+    private fun sendOn(socket: DatagramSocket, command: String) {
+        val data = command.toByteArray()
+        socket.send(DatagramPacket(data, data.size, host, COMMAND_PORT))
+    }
+
+    private fun openSockets() {
+        if (commandSocket?.isClosed != false) {
+            val socket = DatagramSocket()
+            commandSocket = socket
+            scope.launch { readResponses(socket) }
+        }
+        if (stateSocket?.isClosed != false) {
+            // A bind failure is not fatal here: missing telemetry surfaces as LINK_LOST.
+            runCatching { DatagramSocket(STATE_PORT) }.getOrNull()?.let { socket ->
+                stateSocket = socket
+                scope.launch { listenState(socket) }
             }
         }
     }
 
-    fun close() {
-        runCatching { send(TelloCommands.rc(0, 0, 0, 0)) }
-        commandSocket?.close()
-        stateSocket?.close()
-        _connection.value = TelloConnectionState.DISCONNECTED
-        scope.cancel()
-    }
-
-    private fun sendAndWait(command: String): String {
-        val socket = commandSocket ?: error("No command socket")
-        val data = command.toByteArray()
-        socket.send(DatagramPacket(data, data.size, host, COMMAND_PORT))
-        val buffer = ByteArray(1024)
-        val packet = DatagramPacket(buffer, buffer.size)
-        socket.receive(packet)
-        socket.soTimeout = 0
-        return String(packet.data, 0, packet.length)
-    }
-
-    private suspend fun listenState() = withContext(Dispatchers.IO) {
+    private fun readResponses(socket: DatagramSocket) {
         runCatching {
-            val socket = DatagramSocket(STATE_PORT).also { stateSocket = it }
-            val buffer = ByteArray(2048)
-            while (isActive) {
+            val buffer = ByteArray(1024)
+            while (!socket.isClosed) {
                 val packet = DatagramPacket(buffer, buffer.size)
                 socket.receive(packet)
+                val text = String(packet.data, 0, packet.length).trim()
+                _lastResponse.value = text
+                responses.trySend(text)
+            }
+        }
+    }
+
+    private fun listenState(socket: DatagramSocket) {
+        runCatching {
+            val buffer = ByteArray(2048)
+            while (!socket.isClosed) {
+                val packet = DatagramPacket(buffer, buffer.size)
+                socket.receive(packet)
+                stateMonitor.onPacket()
                 _telemetry.value = TelloTelemetry.parse(String(packet.data, 0, packet.length))
             }
+        }
+    }
+
+    private suspend fun monitorLink() {
+        while (scope.isActive) {
+            val quality = stateMonitor.quality()
+            _stateLink.value = quality
+            when (_connection.value) {
+                TelloConnectionState.CONNECTED ->
+                    if (quality.level == LinkLevel.LOST) _connection.value = TelloConnectionState.LINK_LOST
+                TelloConnectionState.LINK_LOST ->
+                    if (quality.level == LinkLevel.GOOD) _connection.value = TelloConnectionState.CONNECTED
+                else -> Unit
+            }
+            delay(MONITOR_PERIOD_MS)
         }
     }
 }

@@ -28,4 +28,9 @@ class StickMapperTest {
     fun `out of range and NaN axes are clamped`() {
         assertEquals(RcInput(yaw = -100, roll = 100), StickMapper.map(-3f, Float.NaN, 2f, 0f))
     }
+
+    @Test
+    fun `rate scale limits output`() {
+        assertEquals(RcInput(yaw = 35, throttle = 35), StickMapper.map(StickAxes(leftX = 1f, leftY = -1f), scale = 0.35f))
+    }
 }

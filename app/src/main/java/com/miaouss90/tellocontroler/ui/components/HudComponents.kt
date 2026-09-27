@@ -14,28 +14,49 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.miaouss90.tellocontroler.tello.LinkLevel
 import com.miaouss90.tellocontroler.ui.theme.HudColors
 
+fun LinkLevel.color(): Color = when (this) {
+    LinkLevel.NONE -> HudColors.Muted
+    LinkLevel.GOOD -> HudColors.Green
+    LinkLevel.DEGRADED -> HudColors.Amber
+    LinkLevel.LOST -> HudColors.Red
+}
+
 @Composable
-fun StatusPill(label: String, ok: Boolean, okColor: Color) {
+fun StatusPill(label: String, dotColor: Color) {
     Surface(color = HudColors.Panel, shape = RoundedCornerShape(18.dp)) {
         Row(
             Modifier.padding(horizontal = 11.dp, vertical = 7.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text("●", color = if (ok) okColor else HudColors.Muted, fontSize = 9.sp)
+            Text("●", color = dotColor, fontSize = 9.sp)
             Text(label, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
 
 @Composable
-fun Metric(name: String, value: String) {
+fun Metric(name: String, value: String, valueColor: Color = Color.White) {
     Surface(color = HudColors.Panel, shape = RoundedCornerShape(11.dp)) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
             Text(name, color = HudColors.Muted, fontSize = 8.sp, fontWeight = FontWeight.Bold)
-            Text(value, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text(value, color = valueColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
         }
+    }
+}
+
+@Composable
+fun Banner(text: String, color: Color, modifier: Modifier = Modifier) {
+    Surface(modifier, color = color, shape = RoundedCornerShape(12.dp)) {
+        Text(
+            text,
+            Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp,
+        )
     }
 }

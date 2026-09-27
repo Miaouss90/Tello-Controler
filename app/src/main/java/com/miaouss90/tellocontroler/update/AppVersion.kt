@@ -3,7 +3,7 @@ package com.miaouss90.tellocontroler.update
 /** Pure semantic-version comparison for release tags such as `v0.3.42` or `0.3.0-dev`. */
 object AppVersion {
     fun parse(version: String): List<Int> =
-        version.trim().removePrefix("v").substringBefore('-').split('.').map { it.toIntOrNull() ?: 0 }
+        version.trim().trimStart('v', 'V').substringBefore('-').split('.').map { it.toIntOrNull() ?: 0 }
 
     fun isNewer(candidate: String, installed: String): Boolean {
         val a = parse(candidate)
