@@ -8,8 +8,8 @@ Each item has two statuses — nothing counts as done for flight until it is val
 ## Next up
 Best "wow / effort" ratio, in order (Slow/Normal/Sport rates already shipped):
 1. **Finish M1 hardware validation** (failsafes) — prerequisite for everything below.
-2. Rich FPV HUD (M3).
-3. Controller rumble on alerts (M4).
+2. ~~Rich FPV HUD (M3)~~ — coded, awaiting hardware check.
+3. ~~Controller rumble on alerts (M4)~~ — coded, awaiting hardware check.
 4. Video + telemetry recording, flight recorder (M5).
 5. Mission Pads (M6).
 6. Visual target tracking (M7).
@@ -63,8 +63,8 @@ Everything `docs/SAFETY.md` requires before flying, plus the bench test that val
 | Item | Code | Hardware |
 |---|---|---|
 | Video 4:3 letterbox (no stretching on wide phones) | ✅ | ⬜ |
-| Rich, configurable HUD: speed (`vgx/vgy/vgz`), altitude, battery, flight timer, link quality | ⬜ | — |
-| Virtual cockpit: artificial horizon, heading tape, central reticle | ⬜ | — |
+| Rich, configurable HUD: speed (`vgx/vgy/vgz`), altitude, battery, flight timer, link quality | ✅ | ⬜ speed units/signs |
+| Virtual cockpit: artificial horizon, heading tape, central reticle (toggles in Settings) | ✅ | ⬜ pitch/roll signs |
 | Photo capture (frame grab from the decoder) | ⬜ | ⬜ |
 | Local video recording (H.264 stream to MP4, no re-encode) | ⬜ | ⬜ |
 | Low-latency video tuning + latency measurement | ⬜ | ⬜ |
@@ -74,7 +74,7 @@ Everything `docs/SAFETY.md` requires before flying, plus the bench test that val
 |---|---|---|
 | Full Xbox button remapping | ⬜ | ⬜ |
 | Saved controller profiles | ⬜ | — |
-| Rumble on alerts (low battery, link loss, emergency arming) — depends on Android/controller rumble support | ⬜ | ⬜ |
+| Rumble on alerts (low battery, link loss, emergency arming) — depends on Android/controller rumble support | ✅ | ⬜ |
 | Triggers as analog speed control / software tilt | ⬜ | ⬜ |
 
 ## M5 — Flight recorder & replay

@@ -17,6 +17,10 @@ data class FlightSettings(
     val deadZone: Float = StickMapper.DEFAULT_DEAD_ZONE,
     val minTakeoffBatteryPercent: Int = 20,
     val touchSticks: Boolean = false,
+    val hudHorizon: Boolean = true,
+    val hudHeading: Boolean = true,
+    val hudReticle: Boolean = true,
+    val rumbleAlerts: Boolean = true,
 ) {
     companion object {
         val DEAD_ZONE_RANGE = 0.02f..0.25f
