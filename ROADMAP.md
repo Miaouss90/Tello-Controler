@@ -1,6 +1,6 @@
 # Roadmap
 
-## V0.1 — Foundation
+## V0.1 — Installable phone release
 - [x] Native Kotlin/Compose project
 - [x] Landscape HUD skeleton
 - [x] UDP command transport
@@ -8,10 +8,12 @@
 - [x] Xbox event mapping skeleton
 - [x] UDP video receiver
 - [x] GitHub Actions APK artifact
-- [ ] Verify CI build
+- [ ] CI build passes and APK installs on the target Android phone
 - [ ] Command acknowledgement/state machine
 - [ ] Fixed-rate RC loop + stale-input watchdog
-- [ ] H.264 MediaCodec decoder and Surface
+- [ ] H.264 MediaCodec decoder and full-screen Surface
+- [ ] Polished dark FPV interface and coherent visual system
+- [ ] First-launch/connect experience suitable for phone testing
 - [ ] Real Tello EDU bench test
 
 ## V0.2 — Safe manual flight
