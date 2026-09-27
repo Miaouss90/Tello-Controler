@@ -112,6 +112,7 @@ private fun FlightSettingsSection(settings: FlightSettings, onChange: (FlightSet
         ToggleRow("Artificial horizon", settings.hudHorizon) { onChange(settings.copy(hudHorizon = it)) }
         ToggleRow("Heading tape", settings.hudHeading) { onChange(settings.copy(hudHeading = it)) }
         ToggleRow("Central reticle", settings.hudReticle) { onChange(settings.copy(hudReticle = it)) }
+        ToggleRow("Controller rumble on alerts", settings.rumbleAlerts) { onChange(settings.copy(rumbleAlerts = it)) }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
