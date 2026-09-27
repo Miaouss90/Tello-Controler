@@ -14,6 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import android.view.SurfaceView
+import android.view.SurfaceHolder
 import androidx.compose.ui.platform.LocalContext
 import com.miaouss90.tellocontroler.controller.XboxController
 
@@ -35,7 +38,15 @@ class MainActivity:ComponentActivity() {
     val connection by vm.connection.collectAsState()
     val connected = connection == com.miaouss90.tellocontroler.tello.TelloConnectionState.CONNECTED
     MaterialTheme {
-        Surface(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize()) {
+            AndroidView(
+                factory={ context -> SurfaceView(context).apply { holder.addCallback(object:SurfaceHolder.Callback {
+                    override fun surfaceCreated(h:SurfaceHolder){ vm.startVideo(h.surface) }
+                    override fun surfaceChanged(h:SurfaceHolder,f:Int,w:Int,hgt:Int){}
+                    override fun surfaceDestroyed(h:SurfaceHolder){ vm.stopVideo() }
+                })}},
+                modifier=Modifier.fillMaxSize()
+            )
             Box(Modifier.fillMaxSize().padding(24.dp)) {
                 Text("TELLO CONTROLER",Modifier.align(Alignment.TopStart))
                 Text(if(connected) "TELLO • SDK ACTIVE" else "DISCONNECTED",Modifier.align(Alignment.TopEnd))
