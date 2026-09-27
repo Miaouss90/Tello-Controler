@@ -56,7 +56,7 @@ fun SetupChecklist(
             )
             Step(
                 done = controllerConnected || touchSticks,
-                title = if (touchSticks) "2. Touch sticks enabled" else "2. Pair the Xbox controller over Bluetooth",
+                title = if (controllerConnected) "2. Xbox controller connected" else "2. Pair the Xbox controller over Bluetooth (touch sticks otherwise)",
                 action = "BLUETOOTH" to { open(Settings.ACTION_BLUETOOTH_SETTINGS) },
             )
             Step(

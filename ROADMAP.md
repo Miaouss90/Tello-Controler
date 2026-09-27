@@ -37,7 +37,9 @@ Everything `docs/SAFETY.md` requires before flying, plus the bench test that val
 | Settings persistence | ✅ | — |
 | Touch-stick fallback | ✅ | ⬜ |
 | Controller remapping | ⬜ | ⬜ |
-| Auto-land detection (low-battery landing reflected in flight state) | ⬜ | ⬜ |
+| Auto-land detection (motor-time freeze ⇒ landed) | ✅ | ⬜ |
+| Touch sticks shown automatically without a controller | ✅ | ⬜ |
+| HUD stick indicators (RC actually sent) | ✅ | ⬜ |
 
 ## M3 — FPV experience
 | Item | Code | Hardware |

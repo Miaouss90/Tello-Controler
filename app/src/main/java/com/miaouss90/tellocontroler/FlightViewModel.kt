@@ -5,12 +5,14 @@ import android.net.Network
 import android.view.Surface
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.miaouss90.tellocontroler.controller.RcInput
 import com.miaouss90.tellocontroler.controller.RcSafetyLoop
 import com.miaouss90.tellocontroler.controller.StickAxes
 import com.miaouss90.tellocontroler.controller.StickMapper
 import com.miaouss90.tellocontroler.flight.FlightEvent
 import com.miaouss90.tellocontroler.flight.FlightState
 import com.miaouss90.tellocontroler.flight.FlightStateMachine
+import com.miaouss90.tellocontroler.flight.MotorStopDetector
 import com.miaouss90.tellocontroler.flight.TakeoffBlock
 import com.miaouss90.tellocontroler.flight.TakeoffGuard
 import com.miaouss90.tellocontroler.settings.FlightSettings
@@ -52,6 +54,7 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
     private val wifi = TelloWifiManager(app)
     private val settingsRepository = SettingsRepository(app)
     private val videoMonitor = LinkMonitor()
+    private val motorStopDetector = MotorStopDetector()
     private var videoReceiver: TelloVideoReceiver? = null
     private var decoder: TelloH264Decoder? = null
     private var emergencyJob: Job? = null
@@ -80,6 +83,10 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
     private val _videoLink = MutableStateFlow(LinkQuality.NONE)
     val videoLink = _videoLink.asStateFlow()
 
+    /** The RC command actually sent to the aircraft (after staleness checks), for the HUD stick indicators. */
+    private val _rcOutput = MutableStateFlow(RcInput.NEUTRAL)
+    val rcOutput = _rcOutput.asStateFlow()
+
     private val _flightState = MutableStateFlow(FlightState.LANDED)
     val flightState = _flightState.asStateFlow()
 
@@ -96,10 +103,13 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         combine(connection, stateLink, telemetry, settings, flightState) { _, _, _, _, _ -> currentTakeoffBlock() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, TakeoffBlock.NOT_CONNECTED)
 
-    private val rcLoop = RcSafetyLoop(send = { client.rc(it) }).also { it.start() }
+    private val rcLoop = RcSafetyLoop(send = {
+        client.rc(it)
+        _rcOutput.value = it
+    }).also { it.start() }
 
     init {
-        viewModelScope.launch { telemetry.collect { reduce(FlightEvent.Height(it.heightCm)) } }
+        viewModelScope.launch { telemetry.collect { onTelemetry(it) } }
         viewModelScope.launch { wifi.network.collect { onTelloNetwork(it) } }
         viewModelScope.launch {
             wifi.state.collect {
@@ -285,6 +295,17 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
             else -> return
         }
         rcLoop.update(StickMapper.map(axes, s.deadZone, s.rate.scale))
+    }
+
+    private fun onTelemetry(t: TelloTelemetry) {
+        reduce(FlightEvent.Height(t.heightCm))
+        if (motorStopDetector.onTelemetry(t.flightTimeSeconds, System.currentTimeMillis())) {
+            motorStopDetector.reset()
+            if (flightState.value != FlightState.LANDED) {
+                reduce(FlightEvent.MotorsStopped)
+                showNotice("Landing detected (motors stopped)")
+            }
+        }
     }
 
     private fun currentTakeoffBlock(): TakeoffBlock? {

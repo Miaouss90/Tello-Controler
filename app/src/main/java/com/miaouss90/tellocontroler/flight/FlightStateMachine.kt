@@ -9,6 +9,9 @@ sealed interface FlightEvent {
     data class LandDone(val ok: Boolean) : FlightEvent
     data object EmergencySent : FlightEvent
     data class Height(val cm: Int) : FlightEvent
+
+    /** Motor-on time stopped advancing: the aircraft is on the ground whatever the reason (auto-land, lost ack). */
+    data object MotorsStopped : FlightEvent
 }
 
 /**
@@ -31,7 +34,7 @@ object FlightStateMachine {
             event.ok -> FlightState.LANDED
             else -> FlightState.FLYING
         }
-        FlightEvent.EmergencySent -> FlightState.LANDED
+        FlightEvent.EmergencySent, FlightEvent.MotorsStopped -> FlightState.LANDED
         is FlightEvent.Height -> when {
             event.cm >= AIRBORNE_HEIGHT_CM && (state == FlightState.LANDED || state == FlightState.TAKING_OFF) ->
                 FlightState.FLYING

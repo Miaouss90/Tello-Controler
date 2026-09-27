@@ -109,7 +109,11 @@ private fun FlightSettingsSection(settings: FlightSettings, onChange: (FlightSet
         )
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Touch sticks (fallback without controller)", Modifier.weight(1f), fontWeight = FontWeight.Bold)
+            Text(
+                "Always show touch sticks (they appear automatically when no controller is connected)",
+                Modifier.weight(1f),
+                fontWeight = FontWeight.Bold,
+            )
             Switch(checked = settings.touchSticks, onCheckedChange = { onChange(settings.copy(touchSticks = it)) })
         }
     }
