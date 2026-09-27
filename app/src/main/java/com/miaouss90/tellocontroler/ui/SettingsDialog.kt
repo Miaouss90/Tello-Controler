@@ -1,55 +1,95 @@
 package com.miaouss90.tellocontroler.ui
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.miaouss90.tellocontroler.FlightViewModel
+import com.miaouss90.tellocontroler.update.GitHubReleaseSource
+import com.miaouss90.tellocontroler.update.UpdateState
+import com.miaouss90.tellocontroler.update.UpdateViewModel
+import com.miaouss90.tellocontroler.ui.theme.HudColors
 
-private const val RELEASES_URL = "https://github.com/Miaouss90/Tello-Controler/releases/latest"
-
+/**
+ * @param updateAllowed false while linked to the Tello: installing restarts the app and would drop control.
+ */
 @Composable
-fun SettingsButton() {
+fun SettingsButton(updateAllowed: Boolean) {
     var open by remember { mutableStateOf(false) }
     TextButton(onClick = { open = true }) { Text("SETTINGS") }
-    if (open) SettingsDialog(onDismiss = { open = false })
+    if (open) SettingsDialog(updateAllowed, onDismiss = { open = false })
 }
 
 @Composable
-private fun SettingsDialog(onDismiss: () -> Unit) {
-    val context = LocalContext.current
+private fun SettingsDialog(updateAllowed: Boolean, onDismiss: () -> Unit) {
+    val updates: UpdateViewModel = viewModel()
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Settings") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Tello Controler v${context.versionName()}")
+                Text("Tello Controler v${updates.installedVersion}")
                 Text("Left stick: yaw / throttle. Right stick: roll / pitch.")
                 Text("A: take off. B: land. Hold Menu ${FlightViewModel.EMERGENCY_HOLD_MS / 1000} s: EMERGENCY motor stop.")
-                Text("Updates are distributed through GitHub Releases.")
-                Row {
-                    OutlinedButton(onClick = {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(RELEASES_URL)))
-                    }) { Text("CHECK FOR UPDATES") }
-                }
+                UpdateSection(updates, updateAllowed)
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("CLOSE") } },
     )
 }
 
-private fun Context.versionName(): String =
-    runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "?"
+@Composable
+private fun UpdateSection(updates: UpdateViewModel, updateAllowed: Boolean) {
+    val context = LocalContext.current
+    val state by updates.state.collectAsState()
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (state is UpdateState.NeedsInstallPermission) {
+                Button(onClick = { context.startActivity(updates.installPermissionIntent()) }) {
+                    Text("ALLOW UPDATES")
+                }
+            } else {
+                Button(enabled = updateAllowed && !state.busy, onClick = { updates.update() }) { Text("UPDATE") }
+            }
+            TextButton(onClick = {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(GitHubReleaseSource.RELEASES_PAGE)))
+            }) { Text("RELEASES PAGE") }
+        }
+        val status = if (!updateAllowed) {
+            "Updates are disabled while connected to the Tello. Restart the app on a Wi-Fi with Internet."
+        } else when (val s = state) {
+            UpdateState.Idle -> null
+            UpdateState.Checking -> "Checking GitHub…"
+            is UpdateState.UpToDate -> "Up to date (v${s.version})."
+            UpdateState.NeedsInstallPermission -> "Allow Tello Controler to install updates, then come back and tap UPDATE."
+            is UpdateState.Downloading -> "Downloading ${s.version}…"
+            UpdateState.Installing -> "Installing…"
+            UpdateState.AwaitingConfirmation -> "Confirm the installation in the system dialog."
+            UpdateState.Installed -> "Updated. Reopen the app."
+            is UpdateState.Failed -> "Update failed: ${s.message}"
+        }
+        if (state is UpdateState.Downloading) {
+            val progress = (state as UpdateState.Downloading).progress
+            if (progress != null) LinearProgressIndicator(progress = { progress }) else LinearProgressIndicator()
+        }
+        status?.let { Text(it, color = HudColors.Muted, fontSize = 12.sp) }
+    }
+}

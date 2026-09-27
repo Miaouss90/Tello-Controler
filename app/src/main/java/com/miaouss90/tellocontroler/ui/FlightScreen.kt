@@ -63,7 +63,7 @@ fun FlightScreen(vm: FlightViewModel) {
                 Modifier.align(Alignment.BottomEnd).padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                SettingsButton()
+                SettingsButton(updateAllowed = !connected)
                 if (!connected) Button(onClick = { vm.connect() }) { Text("CONNECT") }
                 Button(
                     enabled = connected,

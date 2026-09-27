@@ -27,6 +27,13 @@ app/src/main/java/com/miaouss90/tellocontroler/
 │   ├── TelloVideoReceiver.kt UDP 11111 transport
 │   ├── AnnexB.kt            PURE H.264 start-code scanner                        [unit-tested]
 │   └── TelloH264Decoder.kt  MediaCodec → Surface
+├── update/                  In-app update from GitHub Releases
+│   ├── AppVersion.kt        PURE version comparison                              [unit-tested]
+│   ├── ReleaseInfo.kt       GitHub release JSON → APK asset                      [unit-tested]
+│   ├── GitHubReleaseSource.kt HTTP client (public repo, no token)
+│   ├── ApkInstaller.kt      PackageInstaller session install
+│   ├── UpdateInstallReceiver.kt install result / system confirmation
+│   └── UpdateViewModel.kt   one-tap check → download → install state machine
 └── ui/
     ├── FlightScreen.kt      Landscape HUD composition
     ├── VideoSurface.kt      SurfaceView host for the decoder
@@ -48,7 +55,7 @@ docs/                        REQUIREMENTS, ARCHITECTURE, PROTOCOL, SAFETY, DECIS
 No Gradle wrapper and no local SDK are assumed. CI (`.github/workflows/android.yml`) uses Gradle 8.9 + JDK 17:
 ```bash
 gradle testDebugUnitTest   # JVM unit tests
-gradle assembleDebug       # APK → app/build/outputs/apk/debug/app-debug.apk
+gradle assembleRelease     # APK → app/build/outputs/apk/release/app-release.apk
 ```
 Local build without installing the SDK (Docker):
 ```bash
@@ -59,8 +66,17 @@ docker run --rm -v "$PWD":/w -w /w ghcr.io/cirruslabs/android-sdk:35 bash -c \
 Note: AGP's `aapt2` is x86_64-only on Linux, so a full local build fails on ARM64 hosts (the owner's WSL is
 aarch64). There, only pure-Kotlin logic can be checked locally; rely on CI for `assembleDebug`.
 
-Releases: pushing a `v*` tag runs `release.yml` and publishes the APK to GitHub Releases. Bump
-`versionCode`/`versionName` in `app/build.gradle.kts` first. Never tag without the owner's explicit request.
+## Release pipeline (fully automatic)
+- Every push/PR to `main`: unit tests + release APK uploaded as a workflow artifact.
+- Every push to `main` (= every merged PR): GitHub Release `v<telloVersionBase>.<run_number>` with the APK,
+  marked latest. **Merging to `main` ships to the owner's phone** — keep `main` flyable.
+- Version: `versionCode = GITHUB_RUN_NUMBER`, `versionName = telloVersionBase.run_number`
+  (`gradle.properties`). Never hardcode versions; bump `telloVersionBase` for a new minor line.
+- In-app: Settings → UPDATE queries `releases/latest`, downloads the `.apk` asset and installs it with
+  PackageInstaller. Needs the one-time "install unknown apps" permission.
+- **Signing:** releases are signed with a single long-lived key from repo secrets `TELLO_KEYSTORE_BASE64`,
+  `TELLO_KEYSTORE_PASSWORD`, `TELLO_KEY_ALIAS`, `TELLO_KEY_PASSWORD`. Changing or losing it makes updates
+  impossible (users must uninstall). Never regenerate it, never commit it. `main` builds fail without it.
 
 ## Safety rules (must never regress)
 1. **Only `RcSafetyLoop` sends `rc` commands.** Never call `TelloClient.rc` from UI or input handlers.
@@ -70,7 +86,8 @@ Releases: pushing a `v*` tag runs `release.yml` and publishes the APK to GitHub 
 5. `emergency` (motor cut, the drone falls) requires holding Menu ≥ `FlightViewModel.EMERGENCY_HOLD_MS`.
    Never map it to a single tap or an on-screen button without a guard.
 6. `CONNECTED` means the Tello acknowledged `command` with `ok` — never assume it.
-7. Anything not verified on a real Tello is marked `HARDWARE-UNVERIFIED` in code/docs. Don't remove the mark
+7. In-app update is disabled while connected to the Tello (installing kills the app mid-flight).
+8. Anything not verified on a real Tello is marked `HARDWARE-UNVERIFIED` in code/docs. Don't remove the mark
    unless the owner reports a successful hardware test.
 
 Changes touching these areas must include/adjust unit tests and mention the safety impact in the commit body.
@@ -83,7 +100,7 @@ Changes touching these areas must include/adjust unit tests and mention the safe
 - Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `ci:`, `chore:`), English.
 - Feature branches + PR to `main`; `main` must always build.
 - No new dependency without a reason in the PR description. No backend, analytics or network calls
-  other than the Tello and the GitHub Releases link.
+  other than the Tello and the GitHub Releases API.
 
 ## Definition of done
 - [ ] `testDebugUnitTest` and `assembleDebug` pass (CI green).

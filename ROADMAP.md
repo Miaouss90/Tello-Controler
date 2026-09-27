@@ -21,10 +21,12 @@
 ## V0.2 — Safe manual flight & settings
 - [x] Settings screen
 - [x] In-app "Check for updates" action
-- [ ] Compare installed version with latest GitHub Release
+- [x] Compare installed version with latest GitHub Release
 - [x] Open the latest GitHub Release from the app for APK installation
 - [x] Display current installed version
-- [ ] Native GitHub API version comparison and latest available version
+- [x] Native GitHub API version comparison and latest available version
+- [x] One-tap in-app download & install (PackageInstaller)
+- [x] Automatic versioning + GitHub Release on every `main` build (signed with a stable key)
 - [x] Controller connect/disconnect status
 - [x] Rescaled dead-zone (configurable value still pending)
 - [ ] Slow / Normal / Sport rates
@@ -54,5 +56,4 @@
 - [ ] Object detection/tracking
 - [ ] Assisted visual flight
 - [ ] Optional simulator
-- [ ] Signed releases / internal distribution
 - [ ] Multiple Tello EDU research

@@ -3,6 +3,15 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+
+// Versioning is automatic: CI sets GITHUB_RUN_NUMBER, giving versionCode N and versionName <base>.N.
+// Bump `telloVersionBase` in gradle.properties for a new minor/major line.
+val versionBase = providers.gradleProperty("telloVersionBase").get()
+val ciBuildNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()
+
+// Release signing key comes from CI secrets (see AGENTS.md). Without it, release falls back to debug signing.
+val releaseKeystore = System.getenv("TELLO_KEYSTORE_FILE")?.let { file(it) }?.takeIf { it.exists() }
+
 android {
     namespace = "com.miaouss90.tellocontroler"
     compileSdk = 35
@@ -10,15 +19,34 @@ android {
         applicationId = "com.miaouss90.tellocontroler"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = ciBuildNumber ?: 1
+        versionName = if (ciBuildNumber != null) "$versionBase.$ciBuildNumber" else "$versionBase.0-dev"
+    }
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = System.getenv("TELLO_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("TELLO_KEY_ALIAS")
+                keyPassword = System.getenv("TELLO_KEY_PASSWORD")
+            }
+        }
+    }
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
     testOptions { unitTests.isReturnDefaultValues = true }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 }
@@ -32,4 +60,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
     testImplementation("junit:junit:4.13.2")
+    // Real org.json on the JVM (Android's is stubbed in unit tests).
+    testImplementation("org.json:json:20240303")
 }
