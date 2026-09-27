@@ -32,7 +32,7 @@ class FlightStateMachineTest {
 
     @Test
     fun `telemetry height corrects state`() {
-        assertEquals(FLYING, run(LANDED, FlightEvent.Height(80)))
+        assertEquals(LANDED, run(LANDED, FlightEvent.Height(80)))
         assertEquals(FLYING, run(TAKING_OFF, FlightEvent.Height(30)))
         assertEquals(LANDED, run(LANDING, FlightEvent.Height(0)))
         assertEquals(FLYING, run(FLYING, FlightEvent.Height(0)))
@@ -51,5 +51,16 @@ class FlightStateMachineTest {
     @Test
     fun `motors stopped always ends landed`() {
         FlightState.entries.forEach { assertEquals(LANDED, run(it, FlightEvent.MotorsStopped)) }
+    }
+
+    @Test
+    fun `motors running promotes landed only`() {
+        assertEquals(FLYING, run(LANDED, FlightEvent.MotorsRunning))
+        assertEquals(LANDING, run(LANDING, FlightEvent.MotorsRunning))
+    }
+
+    @Test
+    fun `manual landed always ends landed`() {
+        FlightState.entries.forEach { assertEquals(LANDED, run(it, FlightEvent.ManualLanded)) }
     }
 }

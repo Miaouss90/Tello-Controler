@@ -16,6 +16,10 @@ class TelloVideoReceiver(
 ) {
     companion object {
         const val VIDEO_PORT = 11111
+
+        /** The Tello splits frames into 1460-byte datagrams; a shorter one ends a frame. HARDWARE-UNVERIFIED. */
+        const val FULL_PACKET_BYTES = 1460
+        private const val RECEIVE_BUFFER_BYTES = 1 shl 20
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -26,6 +30,8 @@ class TelloVideoReceiver(
             runCatching {
                 val s = DatagramSocket(VIDEO_PORT).also {
                     socketBinder?.invoke(it)
+                    // Absorb bursts (key frames) so the kernel does not drop datagrams.
+                    runCatching { it.receiveBufferSize = RECEIVE_BUFFER_BYTES }
                     socket = it
                 }
                 val buffer = ByteArray(2048)

@@ -9,8 +9,8 @@ Each item has two statuses — nothing counts as done for flight until it is val
 Best "wow / effort" ratio, in order (Slow/Normal/Sport rates already shipped):
 1. **Finish M1 hardware validation** (failsafes) — prerequisite for everything below.
 2. ~~Rich FPV HUD (M3)~~ — coded, awaiting hardware check.
-3. ~~Controller rumble on alerts (M4)~~ — coded, awaiting hardware check.
-4. Video + telemetry recording, flight recorder (M5).
+3. ~~Controller rumble on alerts (M4)~~ — validated (arming, Wi-Fi loss).
+4. ~~Video + telemetry recording, flight recorder (M5)~~ — coded, awaiting hardware check.
 5. Mission Pads (M6).
 6. Visual target tracking (M7).
 7. Mission editor (M6).
@@ -65,22 +65,23 @@ Everything `docs/SAFETY.md` requires before flying, plus the bench test that val
 | Video 4:3 letterbox (no stretching on wide phones) | ✅ | ⬜ |
 | Rich, configurable HUD: speed (`vgx/vgy/vgz`), altitude, battery, flight timer, link quality | ✅ | ⬜ speed units/signs |
 | Virtual cockpit: artificial horizon, heading tape, central reticle (toggles in Settings) | ✅ | ⬜ pitch/roll signs |
-| Photo capture (frame grab from the decoder) | ⬜ | ⬜ |
-| Local video recording (H.264 stream to MP4, no re-encode) | ⬜ | ⬜ |
-| Low-latency video tuning + latency measurement | ⬜ | ⬜ |
+| Photo capture (frame grab from the decoder, X button) | ✅ | ⬜ |
+| Local video recording (H.264 stream to MP4, no re-encode, View button) | ✅ | ⬜ |
+| Video reliability: dedicated decode thread, whole frames, no dropped input, clean resync on key frame, 1 MB socket buffer, Wi-Fi low-latency lock | ✅ | ⬜ |
+| Latency measurement | ⬜ | ⬜ |
 
 ## M4 — Advanced controller
 | Item | Code | Hardware |
 |---|---|---|
 | Full Xbox button remapping | ⬜ | ⬜ |
 | Saved controller profiles | ⬜ | — |
-| Rumble on alerts (low battery, link loss, emergency arming) — depends on Android/controller rumble support | ✅ | ⬜ |
+| Rumble on alerts (low battery, link loss, emergency arming) — depends on Android/controller rumble support | ✅ | 🟡 arming + Wi-Fi loss ok; battery untested |
 | Triggers as analog speed control / software tilt | ⬜ | ⬜ |
 
 ## M5 — Flight recorder & replay
 | Item | Code | Hardware |
 |---|---|---|
-| Flight recorder: telemetry, RC commands, events (CSV/JSON per flight) | ⬜ | ⬜ |
+| Flight recorder: telemetry, RC commands, events (CSV per flight, 10 Hz) | ✅ | ⬜ |
 | Video synchronized with the flight log | ⬜ | ⬜ |
 | Flight log viewer (battery, altitude, attitude charts) | ⬜ | — |
 | Replay: re-fly recorded RC commands (supervised, stick override) | ⬜ | ⬜ |

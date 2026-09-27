@@ -1,6 +1,7 @@
 package com.miaouss90.tellocontroler
 
 import android.app.Application
+import android.graphics.Bitmap
 import android.net.Network
 import android.view.Surface
 import androidx.lifecycle.AndroidViewModel
@@ -19,12 +20,16 @@ import com.miaouss90.tellocontroler.flight.FlightStateMachine
 import com.miaouss90.tellocontroler.flight.MotorStopDetector
 import com.miaouss90.tellocontroler.flight.TakeoffBlock
 import com.miaouss90.tellocontroler.flight.TakeoffGuard
+import com.miaouss90.tellocontroler.record.FlightRecorder
+import com.miaouss90.tellocontroler.record.MediaStorage
+import com.miaouss90.tellocontroler.record.VideoRecorder
 import com.miaouss90.tellocontroler.settings.FlightSettings
 import com.miaouss90.tellocontroler.settings.SettingsRepository
 import com.miaouss90.tellocontroler.tello.CommandResult
 import com.miaouss90.tellocontroler.tello.LinkLevel
 import com.miaouss90.tellocontroler.tello.LinkMonitor
 import com.miaouss90.tellocontroler.tello.LinkQuality
+import com.miaouss90.tellocontroler.tello.NalSplitter
 import com.miaouss90.tellocontroler.tello.TelloClient
 import com.miaouss90.tellocontroler.tello.TelloConnectionState
 import com.miaouss90.tellocontroler.tello.TelloH264Decoder
@@ -32,9 +37,12 @@ import com.miaouss90.tellocontroler.tello.TelloTelemetry
 import com.miaouss90.tellocontroler.tello.TelloVideoReceiver
 import com.miaouss90.tellocontroler.tello.TelloWifiManager
 import com.miaouss90.tellocontroler.tello.TelloWifiState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,7 +51,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.io.File
 import java.net.DatagramSocket
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /** Orchestrates transport, safety loop, flight state, video and settings. Holds no Android UI references. */
 class FlightViewModel(app: Application) : AndroidViewModel(app) {
@@ -52,6 +64,7 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         const val EMERGENCY_HOLD_MS = 1000L
         private const val NOTICE_MS = 4000L
         private const val MONITOR_PERIOD_MS = 250L
+        private const val FLIGHT_LOG_PERIOD_MS = 100L
     }
 
     private val client = TelloClient()
@@ -59,6 +72,10 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
     private val settingsRepository = SettingsRepository(app)
     private val videoMonitor = LinkMonitor()
     private val motorStopDetector = MotorStopDetector()
+    private val nalSplitter = NalSplitter()
+    private val storage = MediaStorage(app)
+    private val flightRecorder = FlightRecorder(File(app.cacheDir, "flights"))
+    @Volatile private var videoRecorder: VideoRecorder? = null
     private var videoReceiver: TelloVideoReceiver? = null
     private var decoder: TelloH264Decoder? = null
     private var emergencyJob: Job? = null
@@ -106,6 +123,14 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _notice = MutableStateFlow<String?>(null)
     val notice = _notice.asStateFlow()
+
+    /** Wall-clock start of the current video recording, null when not recording. */
+    private val _recordingSince = MutableStateFlow<Long?>(null)
+    val recordingSince = _recordingSince.asStateFlow()
+
+    /** The UI owns the SurfaceView, so it performs the frame grab when asked. */
+    private val _photoRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val photoRequests: SharedFlow<Unit> = _photoRequests
 
     val takeoffBlock: StateFlow<TakeoffBlock?> =
         combine(connection, stateLink, telemetry, settings, flightState) { _, _, _, _, _ -> currentTakeoffBlock() }
@@ -160,6 +185,12 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
                 delay(RcSafetyLoop.PERIOD_MS)
             }
         }
+        viewModelScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                recordFlightSample()
+                delay(FLIGHT_LOG_PERIOD_MS)
+            }
+        }
     }
 
     /** Locks the Tello Wi-Fi first; the SDK handshake starts once the network is available. */
@@ -172,6 +203,7 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         stopVideo()
         videoSurface = surface
         videoMonitor.reset()
+        nalSplitter.reset()
         decoder = TelloH264Decoder(surface).also { it.start() }
         startVideoReceiver()
     }
@@ -186,9 +218,17 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun startVideoReceiver() {
         videoReceiver?.stop()
-        videoReceiver = TelloVideoReceiver(socketBinder) {
+        videoReceiver = TelloVideoReceiver(socketBinder) { chunk ->
             videoMonitor.onPacket()
-            decoder?.offer(it)
+            val endOfFrame = chunk.size < TelloVideoReceiver.FULL_PACKET_BYTES
+            nalSplitter.push(chunk, endOfFrame).forEach { nal ->
+                decoder?.offerNal(nal)
+                videoRecorder?.onNal(nal)
+            }
+            if (endOfFrame) {
+                decoder?.endOfFrame()
+                videoRecorder?.endOfFrame()
+            }
         }.also { it.start() }
     }
 
@@ -273,6 +313,9 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Pilot says the aircraft is on the ground: re-enables takeoff when no automatic signal did. */
+    fun markLanded() = reduce(FlightEvent.ManualLanded)
+
     /** SAFETY: landing is never blocked by flight state or guards. */
     fun land() {
         reduce(FlightEvent.LandSent)
@@ -306,7 +349,53 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         _emergencyArming.value = false
     }
 
+    fun requestPhoto() {
+        if (videoLink.value.level != LinkLevel.GOOD) {
+            showNotice("No video to photograph")
+            return
+        }
+        _photoRequests.tryEmit(Unit)
+    }
+
+    fun onPhotoCaptured(bitmap: Bitmap?) {
+        if (bitmap == null) {
+            showNotice("Photo failed")
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { storage.savePhoto(bitmap, "tello-${timestamp()}.jpg") }
+                .onSuccess { showNotice("Photo saved: $it") }
+                .onFailure { showNotice("Photo failed: ${it.message}") }
+        }
+    }
+
+    fun toggleRecording() {
+        if (videoRecorder != null) stopRecording() else startRecording()
+    }
+
+    private fun startRecording() {
+        runCatching { VideoRecorder(storage.createVideo("tello-${timestamp()}.mp4")) }
+            .onSuccess {
+                videoRecorder = it
+                _recordingSince.value = System.currentTimeMillis()
+                showNotice("Recording (starts at the next key frame)")
+            }
+            .onFailure { showNotice("Cannot record: ${it.message}") }
+    }
+
+    private fun stopRecording() {
+        val recorder = videoRecorder ?: return
+        videoRecorder = null
+        _recordingSince.value = null
+        viewModelScope.launch(Dispatchers.IO) {
+            val saved = recorder.stop()
+            showNotice(if (saved) "Video saved in Movies/${MediaStorage.FOLDER}" else "No video frames recorded")
+        }
+    }
+
     override fun onCleared() {
+        videoRecorder?.stop()
+        videoRecorder = null
         emergencyReleased()
         stopVideo()
         rcLoop.stop()
@@ -330,7 +419,33 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
      * Polled, not driven by telemetry emissions: StateFlow drops identical packets, and a landed Tello sends
      * identical packets, so an emission-driven check would never see the counter stay frozen.
      */
+    /** Flight recorder: one CSV per flight (motors on → landed), exported to Download/TelloControler. */
+    private fun recordFlightSample(event: String? = null) {
+        val state = flightState.value
+        val now = System.currentTimeMillis()
+        synchronized(flightRecorder) {
+            if (state != FlightState.LANDED && settings.value.flightLogs && !flightRecorder.isRecording) {
+                flightRecorder.start(now, "flight-${timestamp()}.csv")
+            }
+            flightRecorder.record(now, event, state, telemetry.value, rcOutput.value)
+            if (state == FlightState.LANDED && flightRecorder.isRecording) {
+                flightRecorder.stop()?.let(::exportFlightLog)
+            }
+        }
+    }
+
+    private fun exportFlightLog(file: File) {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { storage.saveFile(file, file.name, "text/csv") }
+                .onSuccess { showNotice("Flight log saved: $it") }
+            file.delete()
+        }
+    }
+
+    private fun timestamp(): String = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.ROOT).format(Date())
+
     private fun onAlert(alert: FlightAlert) {
+        viewModelScope.launch(Dispatchers.IO) { recordFlightSample("alert:${alert.name}") }
         if (settings.value.rumbleAlerts) ControllerRumble.play(alert)
         when (alert) {
             FlightAlert.BATTERY_LOW -> showNotice("Battery low: ${telemetry.value.batteryPercent}% — land soon")
@@ -341,7 +456,12 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun checkMotorsStopped() {
         if (stateLink.value.level != LinkLevel.GOOD) return
-        if (motorStopDetector.onTelemetry(telemetry.value.flightTimeSeconds, System.currentTimeMillis())) {
+        val now = System.currentTimeMillis()
+        val stopped = motorStopDetector.onTelemetry(telemetry.value.flightTimeSeconds, now)
+        if (!stopped && flightState.value == FlightState.LANDED && motorStopDetector.motorsRunning(now)) {
+            reduce(FlightEvent.MotorsRunning)
+        }
+        if (stopped) {
             motorStopDetector.reset()
             if (flightState.value != FlightState.LANDED) {
                 reduce(FlightEvent.MotorsStopped)
@@ -377,13 +497,17 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun reduce(event: FlightEvent) {
+        val before = _flightState.value
         val state = _flightState.updateAndGet { FlightStateMachine.reduce(it, event) }
+        if (state == FlightState.LANDED && before != FlightState.LANDED) motorStopDetector.reset()
+        if (state != before) viewModelScope.launch(Dispatchers.IO) { recordFlightSample("state:$state") }
         when {
             state == FlightState.LANDED -> _flightStartedAt.value = null
             _flightStartedAt.value == null -> _flightStartedAt.value = System.currentTimeMillis()
         }
     }
 
+    @Synchronized
     private fun showNotice(message: String) {
         _notice.value = message
         noticeJob?.cancel()

@@ -12,6 +12,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 fun VideoSurface(
     onSurfaceReady: (Surface) -> Unit,
     onSurfaceDestroyed: () -> Unit,
+    onViewCreated: (SurfaceView) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     AndroidView(
@@ -22,6 +23,7 @@ fun VideoSurface(
                     override fun surfaceChanged(h: SurfaceHolder, format: Int, width: Int, height: Int) {}
                     override fun surfaceDestroyed(h: SurfaceHolder) = onSurfaceDestroyed()
                 })
+                onViewCreated(this)
             }
         },
         modifier = modifier,

@@ -34,6 +34,11 @@ app/src/main/java/com/miaouss90/tellocontroler/
 │   ├── TelloVideoReceiver.kt UDP 11111 transport
 │   ├── AnnexB.kt            PURE H.264 start-code scanner                        [unit-tested]
 │   └── TelloH264Decoder.kt  MediaCodec → Surface
+├── record/                  Photo, MP4 recording, flight recorder
+│   ├── AccessUnitAssembler.kt PURE NAL stream → SPS/PPS config + whole frames      [unit-tested]
+│   ├── FlightLog.kt         PURE CSV format + per-flight FlightRecorder            [unit-tested]
+│   ├── VideoRecorder.kt     MediaMuxer MP4 without re-encoding
+│   └── MediaStorage.kt      MediaStore (Movies/Pictures/Download › TelloControler)
 ├── update/                  In-app update from GitHub Releases
 │   ├── AppVersion.kt        PURE version comparison                              [unit-tested]
 │   ├── ReleaseInfo.kt       GitHub release JSON → APK asset                      [unit-tested]

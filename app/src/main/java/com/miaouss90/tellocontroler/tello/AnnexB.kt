@@ -19,4 +19,25 @@ object AnnexB {
         }
         return result
     }
+
+    const val NAL_SLICE = 1
+    const val NAL_IDR = 5
+    const val NAL_SPS = 7
+    const val NAL_PPS = 8
+
+    /** Index of the NAL header byte in a start-code-prefixed NAL unit. */
+    fun headerOffset(nal: ByteArray): Int = if (nal.size > 2 && nal[2].toInt() == 1) 3 else 4
+
+    fun nalType(nal: ByteArray): Int {
+        val offset = headerOffset(nal)
+        return if (nal.size > offset) nal[offset].toInt() and 0x1F else -1
+    }
+
+    fun isVideoSlice(nal: ByteArray): Boolean = nalType(nal).let { it == NAL_SLICE || it == NAL_IDR }
+
+    /** first_mb_in_slice == 0 (ue(v) "1" bit): this slice starts a new picture. */
+    fun startsNewFrame(nal: ByteArray): Boolean {
+        val offset = headerOffset(nal) + 1
+        return isVideoSlice(nal) && nal.size > offset && (nal[offset].toInt() and 0x80) != 0
+    }
 }
