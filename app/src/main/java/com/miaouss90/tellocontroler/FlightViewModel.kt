@@ -109,19 +109,25 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
     }).also { it.start() }
 
     init {
-        viewModelScope.launch { telemetry.collect { onTelemetry(it) } }
+        viewModelScope.launch { telemetry.collect { reduce(FlightEvent.Height(it.heightCm)) } }
         viewModelScope.launch { wifi.network.collect { onTelloNetwork(it) } }
         viewModelScope.launch {
             wifi.state.collect {
-                if (it == TelloWifiState.UNAVAILABLE) {
-                    wantConnected = false
-                    showNotice("Tello Wi-Fi not found or not approved")
+                when (it) {
+                    TelloWifiState.UNAVAILABLE -> {
+                        wantConnected = false
+                        showNotice("Tello Wi-Fi not found or not approved")
+                    }
+                    // Re-arm at once: the new request waits for the Tello access point to come back.
+                    TelloWifiState.LOST -> if (wantConnected) wifi.request()
+                    else -> Unit
                 }
             }
         }
         viewModelScope.launch {
             while (isActive) {
                 _videoLink.value = videoMonitor.quality()
+                checkMotorsStopped()
                 delay(MONITOR_PERIOD_MS)
             }
         }
@@ -297,9 +303,13 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         rcLoop.update(StickMapper.map(axes, s.deadZone, s.rate.scale))
     }
 
-    private fun onTelemetry(t: TelloTelemetry) {
-        reduce(FlightEvent.Height(t.heightCm))
-        if (motorStopDetector.onTelemetry(t.flightTimeSeconds, System.currentTimeMillis())) {
+    /**
+     * Polled, not driven by telemetry emissions: StateFlow drops identical packets, and a landed Tello sends
+     * identical packets, so an emission-driven check would never see the counter stay frozen.
+     */
+    private fun checkMotorsStopped() {
+        if (stateLink.value.level != LinkLevel.GOOD) return
+        if (motorStopDetector.onTelemetry(telemetry.value.flightTimeSeconds, System.currentTimeMillis())) {
             motorStopDetector.reset()
             if (flightState.value != FlightState.LANDED) {
                 reduce(FlightEvent.MotorsStopped)

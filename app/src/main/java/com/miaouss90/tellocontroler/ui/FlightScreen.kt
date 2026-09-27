@@ -234,7 +234,12 @@ private fun FlightData(
                 StickIndicator("ROLL / PITCH", x = rcOutput.roll, y = rcOutput.pitch)
             }
         }
-        Text("$flightState  •  RATE $rate", color = HudColors.Cyan, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Text(
+            "$flightState  •  RATE $rate  •  MOTOR ${telemetry.flightTimeSeconds} s",
+            color = HudColors.Cyan,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+        )
         Text(
             "YAW ${telemetry.yaw}°   •   PITCH ${telemetry.pitch}°   •   ROLL ${telemetry.roll}°",
             color = Color.White,
