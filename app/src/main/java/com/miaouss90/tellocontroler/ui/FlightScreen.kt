@@ -148,6 +148,7 @@ fun FlightScreen(vm: FlightViewModel) {
                 telemetry = telemetry,
                 flightState = flightState,
                 rate = settings.rate.name,
+                mode = settings.mode.name,
                 stateLink = stateLink,
                 videoLink = videoLink,
                 lastResponse = lastResponse,
@@ -282,6 +283,7 @@ private fun FlightData(
     telemetry: TelloTelemetry,
     flightState: FlightState,
     rate: String,
+    mode: String,
     stateLink: LinkQuality,
     videoLink: LinkQuality,
     lastResponse: String,
@@ -298,7 +300,7 @@ private fun FlightData(
             }
         }
         Text(
-            "$flightState  •  RATE $rate  •  MOTOR ${telemetry.flightTimeSeconds} s",
+            "$flightState  •  $mode  •  RATE $rate  •  MOTOR ${telemetry.flightTimeSeconds} s",
             color = HudColors.Cyan,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,

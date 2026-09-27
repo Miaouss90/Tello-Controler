@@ -17,4 +17,11 @@ class FlightSettingsTest {
         assertEquals(0.25f, s.deadZone)
         assertEquals(10, s.minTakeoffBatteryPercent)
     }
+
+    @Test
+    fun `sanitized clamps expo and height limit`() {
+        val s = FlightSettings(expo = 2f, maxHeightCm = 5000).sanitized()
+        assertEquals(0.8f, s.expo)
+        assertEquals(800, s.maxHeightCm)
+    }
 }

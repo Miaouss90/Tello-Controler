@@ -23,15 +23,22 @@ object StickMapper {
         rightY: Float,
         deadZone: Float = DEFAULT_DEAD_ZONE,
         scale: Float = 1f,
+        expo: Float = 0f,
     ) = RcInput(
-        roll = toRc(shape(rightX, deadZone) * scale),
-        pitch = toRc(-shape(rightY, deadZone) * scale),
-        throttle = toRc(-shape(leftY, deadZone) * scale),
-        yaw = toRc(shape(leftX, deadZone) * scale),
+        roll = toRc(curve(shape(rightX, deadZone), expo) * scale),
+        pitch = toRc(-curve(shape(rightY, deadZone), expo) * scale),
+        throttle = toRc(-curve(shape(leftY, deadZone), expo) * scale),
+        yaw = toRc(curve(shape(leftX, deadZone), expo) * scale),
     )
 
-    fun map(axes: StickAxes, deadZone: Float = DEFAULT_DEAD_ZONE, scale: Float = 1f) =
-        map(axes.leftX, axes.leftY, axes.rightX, axes.rightY, deadZone, scale)
+    fun map(axes: StickAxes, deadZone: Float = DEFAULT_DEAD_ZONE, scale: Float = 1f, expo: Float = 0f) =
+        map(axes.leftX, axes.leftY, axes.rightX, axes.rightY, deadZone, scale, expo)
+
+    /** Expo curve: (1-e)·v + e·v³ — same end points, finer control around the center. */
+    fun curve(v: Float, expo: Float): Float {
+        val e = expo.coerceIn(0f, 1f)
+        return (1 - e) * v + e * v * v * v
+    }
 
     /** Dead-zone with rescaling, so output ramps smoothly from 0 instead of jumping to the dead-zone value. */
     fun shape(value: Float, deadZone: Float): Float {

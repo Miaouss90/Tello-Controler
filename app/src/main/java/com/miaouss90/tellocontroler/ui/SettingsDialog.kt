@@ -37,6 +37,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.miaouss90.tellocontroler.FlightViewModel
+import com.miaouss90.tellocontroler.settings.FlightMode
+import com.miaouss90.tellocontroler.settings.FlightProfiles
 import com.miaouss90.tellocontroler.settings.FlightSettings
 import com.miaouss90.tellocontroler.settings.RateProfile
 import com.miaouss90.tellocontroler.ui.theme.HudColors
@@ -139,6 +141,37 @@ private fun FlightSettingsSection(settings: FlightSettings, onChange: (FlightSet
             }
         }
     }
+    Text("Flight mode")
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlightMode.entries.forEach { mode ->
+            if (mode == settings.mode) {
+                Button(onClick = {}) { Text(mode.name) }
+            } else {
+                OutlinedButton(onClick = { onChange(settings.copy(mode = mode)) }) { Text(mode.name) }
+            }
+        }
+    }
+    Text(
+        when (settings.mode) {
+            FlightMode.STANDARD -> "Your rate, expo and height limit."
+            FlightMode.INDOOR -> "Slow (≤ 35 %), soft sticks, height ≤ ${FlightProfiles.INDOOR_MAX_HEIGHT_CM} cm."
+            FlightMode.CINEMATIC -> "Very slow (≤ 30 %), soft sticks, smoothed movements."
+        },
+        color = HudColors.Muted,
+        fontSize = 12.sp,
+    )
+    Text("Stick expo: ${(settings.expo * 100).roundToInt()} %")
+    Slider(
+        value = settings.expo,
+        onValueChange = { onChange(settings.copy(expo = it)) },
+        valueRange = FlightSettings.EXPO_RANGE,
+    )
+    Text("Height limit: " + if (settings.maxHeightCm == 0) "off" else "${settings.maxHeightCm} cm")
+    Slider(
+        value = settings.maxHeightCm.toFloat(),
+        onValueChange = { onChange(settings.copy(maxHeightCm = (it / 10).roundToInt() * 10)) },
+        valueRange = FlightSettings.MAX_HEIGHT_RANGE.first.toFloat()..FlightSettings.MAX_HEIGHT_RANGE.last.toFloat(),
+    )
     Text("Stick dead-zone: ${(settings.deadZone * 100).roundToInt()} %")
     Slider(
         value = settings.deadZone,

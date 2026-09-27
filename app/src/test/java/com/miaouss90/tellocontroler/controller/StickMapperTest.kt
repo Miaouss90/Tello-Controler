@@ -33,4 +33,10 @@ class StickMapperTest {
     fun `rate scale limits output`() {
         assertEquals(RcInput(yaw = 35, throttle = 35), StickMapper.map(StickAxes(leftX = 1f, leftY = -1f), scale = 0.35f))
     }
+
+    @Test
+    fun `expo softens the center and keeps full deflection`() {
+        assertEquals(31, StickMapper.map(StickAxes(leftX = 0.5f), deadZone = 0f, expo = 0.5f).yaw)
+        assertEquals(100, StickMapper.map(StickAxes(leftX = 1f), deadZone = 0f, expo = 0.8f).yaw)
+    }
 }

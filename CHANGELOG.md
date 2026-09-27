@@ -7,6 +7,9 @@ Hardware validation status: [README › Hardware checklist](README.md#hardware-c
 ## 0.5 — 2026-09-27
 
 ### Added
+- **Flight modes**: Standard, **Indoor** (≤ 35 % speed, soft sticks, height ≤ 150 cm) and **Cinematic** (≤ 30 %,
+  smoothed movements); modes never make flight more aggressive than the user settings.
+- **Stick expo** and **height limit** (climb blocked at the limit, descent always allowed).
 - **Mission Pads** (Tello EDU): detection toggle in Settings (`mon` / `mdirection 0`), `PAD #n x y z` in the HUD,
   pad columns in the flight log.
 - **Photo** (X button / HUD `PHOTO`) → `Pictures/TelloControler`.

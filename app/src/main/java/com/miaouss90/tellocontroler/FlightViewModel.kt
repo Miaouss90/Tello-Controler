@@ -12,6 +12,7 @@ import com.miaouss90.tellocontroler.controller.ControllerRumble
 import com.miaouss90.tellocontroler.controller.FlightAlert
 import com.miaouss90.tellocontroler.controller.RcInput
 import com.miaouss90.tellocontroler.controller.RcSafetyLoop
+import com.miaouss90.tellocontroler.controller.RcShaper
 import com.miaouss90.tellocontroler.controller.StickAxes
 import com.miaouss90.tellocontroler.controller.StickMapper
 import com.miaouss90.tellocontroler.flight.FlightEvent
@@ -23,6 +24,7 @@ import com.miaouss90.tellocontroler.flight.TakeoffGuard
 import com.miaouss90.tellocontroler.record.FlightRecorder
 import com.miaouss90.tellocontroler.record.MediaStorage
 import com.miaouss90.tellocontroler.record.VideoRecorder
+import com.miaouss90.tellocontroler.settings.FlightProfiles
 import com.miaouss90.tellocontroler.settings.FlightSettings
 import com.miaouss90.tellocontroler.settings.SettingsRepository
 import com.miaouss90.tellocontroler.tello.CommandResult
@@ -137,10 +139,24 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         combine(connection, stateLink, telemetry, settings, flightState) { _, _, _, _, _ -> currentTakeoffBlock() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, TakeoffBlock.NOT_CONNECTED)
 
-    private val rcLoop = RcSafetyLoop(send = {
-        client.rc(it)
-        _rcOutput.value = it
-    }).also { it.start() }
+    private val rcShaper = RcShaper()
+    private var wasHeightLimited = false
+
+    private val rcLoop = RcSafetyLoop(
+        send = {
+            client.rc(it)
+            _rcOutput.value = it
+            if (rcShaper.heightLimited && !wasHeightLimited) {
+                showNotice("Height limit ${FlightProfiles.resolve(settings.value).maxHeightCm} cm reached")
+            }
+            wasHeightLimited = rcShaper.heightLimited
+        },
+        shape = {
+            val profile = FlightProfiles.resolve(settings.value)
+            rcShaper.shape(it, profile.smoothing, profile.maxHeightCm, telemetry.value.heightCm)
+        },
+        onNeutralized = { rcShaper.reset() },
+    ).also { it.start() }
 
     init {
         viewModelScope.launch { telemetry.collect { reduce(FlightEvent.Height(it.heightCm)) } }
@@ -425,7 +441,8 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
             _controllerConnected.value -> controllerAxes
             else -> return
         }
-        rcLoop.update(StickMapper.map(axes, s.deadZone, s.rate.scale))
+        val profile = FlightProfiles.resolve(s)
+        rcLoop.update(StickMapper.map(axes, s.deadZone, profile.scale, profile.expo))
     }
 
     /**

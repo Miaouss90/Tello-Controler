@@ -73,6 +73,10 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 - [ ] Dead-zone slider changes stick feel
 - [ ] Touch sticks appear without a controller and fly correctly
 - [ ] HUD stick indicators follow the controller
+- [ ] Expo slider: finer control around the center, full deflection unchanged
+- [ ] INDOOR mode: slow, soft, climbing stops at 150 cm (HUD notice)
+- [ ] CINEMATIC mode: very slow, movements ease in/out; releasing the controller (off) still stops at once
+- [ ] Height limit slider: climbing blocked at the limit, descending still works
 
 ### Flight & safety
 - [x] A takes off, B lands, flight state follows in the HUD

@@ -31,4 +31,17 @@ class RcSafetyLoopTest {
     fun `no input ever received is neutral`() {
         assertEquals(RcInput.NEUTRAL, loop.commandAt(now))
     }
+
+    @Test
+    fun `fresh input is shaped, stale and explicit neutral bypass shaping`() {
+        var neutralized = 0
+        val shaped = RcSafetyLoop(send = {}, clock = { now }, shape = { it.copy(yaw = 99) }, onNeutralized = { neutralized++ })
+        shaped.update(forward)
+        assertEquals(forward.copy(yaw = 99), shaped.nextCommand(now))
+        assertEquals(RcInput.NEUTRAL, shaped.nextCommand(now + RcSafetyLoop.STALE_MS + 1))
+        shaped.update(forward)
+        shaped.neutral()
+        assertEquals(RcInput.NEUTRAL, shaped.nextCommand(now))
+        assertEquals(2, neutralized)
+    }
 }
