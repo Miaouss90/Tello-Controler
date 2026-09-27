@@ -32,7 +32,7 @@ Everything `docs/SAFETY.md` requires before flying, plus the bench test that val
 | Flight state machine (landed / taking off / flying / landing) from acks + height | ✅ | 🟡 nominal path; timeouts untested |
 | Telemetry parser | ✅ | ✅ |
 | Link watchdog: LINK_LOST after 2 s without state, auto-recover, reconnect | ✅ | ⬜ |
-| Locked Tello Wi-Fi (no Internet needed), sockets bound to it, auto-reconnect when it returns | ✅ | 🟡 lock + loss alert ok; auto-reconnect untested |
+| Locked Tello Wi-Fi (no Internet needed), sockets bound to it, auto-reconnect when it returns | ✅ | 🟡 lock, loss alert, reconnect ok (Android dialog must be tapped again) |
 | Connection quality + last-packet indicators (state & video) | ✅ | 🟡 nominal (green) only |
 | Xbox Mode 2 mapping, rescaled dead-zone | ✅ | ✅ |
 | Held-stick input pump (a steady stick is not treated as stale) | ✅ | ✅ |
@@ -94,6 +94,11 @@ Everything `docs/SAFETY.md` requires before flying, plus the bench test that val
 | Mission editor timeline: takeoff → forward 1 m → rotate 90° → wait 2 s → photo → land | ⬜ | ⬜ |
 | Recorded sequences and predefined trajectories | ⬜ | ⬜ |
 | Distance limit / return to a central zone (needs Mission Pads for position) | ⬜ | ⬜ |
+
+## Backlog
+| Item | Code | Hardware |
+|---|---|---|
+| Reconnect without the Android approval dialog (specifier with the exact SSID/BSSID of the approved Tello; BSSID needs location permission) | ⬜ | ⬜ |
 
 ## M7 — Vision-assisted flight
 The feature that makes the app original rather than a remote-control clone.

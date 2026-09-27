@@ -58,7 +58,8 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 ### Connection & link
 - [x] CONNECT locks the `TELLO-xxxx` Wi-Fi (system dialog) and the SDK answers
 - [x] Wi-Fi loss shows the red banner
-- [ ] Tello switched off then on → automatic reconnection (WIFI amber → green, TELLO green, video back)
+- [x] Tello switched off then on → reconnection after tapping **Connect** in the Android system dialog
+- [ ] Reconnection without the system dialog (Android auto-approval — may need the exact SSID/BSSID, see ROADMAP)
 - [ ] Mobile data still works in another app while connected to the Tello
 - [ ] Second session: the Android Wi-Fi approval dialog is remembered (or note that it is not)
 - [ ] LINK LOST banner when telemetry stops, RECONNECT works
