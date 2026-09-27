@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,6 +29,7 @@ import com.miaouss90.tellocontroler.flight.FlightState
 import com.miaouss90.tellocontroler.tello.LinkLevel
 import com.miaouss90.tellocontroler.tello.LinkQuality
 import com.miaouss90.tellocontroler.tello.TelloConnectionState
+import com.miaouss90.tellocontroler.tello.TelloH264Decoder
 import com.miaouss90.tellocontroler.tello.TelloTelemetry
 import com.miaouss90.tellocontroler.tello.TelloWifiState
 import com.miaouss90.tellocontroler.ui.components.Banner
@@ -60,10 +63,14 @@ fun FlightScreen(vm: FlightViewModel) {
 
     TelloTheme {
         Box(Modifier.fillMaxSize().background(HudColors.Night)) {
+            // Keep the Tello 4:3 aspect ratio: letterbox on wide phones instead of stretching.
             VideoSurface(
                 onSurfaceReady = { vm.startVideo(it) },
                 onSurfaceDestroyed = { vm.stopVideo() },
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxHeight()
+                    .aspectRatio(TelloH264Decoder.WIDTH.toFloat() / TelloH264Decoder.HEIGHT, matchHeightConstraintsFirst = true),
             )
 
             if (!videoActive && !connected) {
