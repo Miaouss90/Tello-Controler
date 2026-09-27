@@ -23,11 +23,12 @@
 - [x] Open the latest GitHub Release from the app for APK installation
 - [x] Display current installed version
 - [ ] Native GitHub API version comparison and latest available version
-- [ ] Controller connect/disconnect status
+- [x] Controller connect/disconnect status
 - [ ] Configurable dead-zone
 - [ ] Slow / Normal / Sport rates
-- [ ] App lifecycle failsafe
+- [x] App lifecycle failsafe
 - [ ] Battery takeoff warning/guard
+- [x] Video RX diagnostics / packet indicator
 - [ ] Connection quality and last-packet indicators
 - [ ] Touch-control fallback
 
