@@ -5,7 +5,7 @@ Each item has two statuses — nothing counts as done for flight until it is val
 
 **Legend:** ✅ done · ⬜ to do · 🟡 partially validated · — not applicable
 
-First hardware session: 2026-09-27 (Wi-Fi, Xbox controller, takeoff/land, 4 axes, video, telemetry).
+First hardware session: 2026-09-27 (Wi-Fi, Xbox controller, takeoff/land, 4 axes, video, telemetry, Wi-Fi loss alert).
 
 ## M1 — First safe flight
 Everything `docs/SAFETY.md` requires before flying, plus the bench test that validates it.
@@ -18,7 +18,7 @@ Everything `docs/SAFETY.md` requires before flying, plus the bench test that val
 | Flight state machine (landed / taking off / flying / landing) from acks + height | ✅ | 🟡 nominal path; timeouts untested |
 | Telemetry parser | ✅ | ✅ |
 | Link watchdog: LINK_LOST after 2 s without state, auto-recover, reconnect | ✅ | ⬜ |
-| Locked Tello Wi-Fi (no Internet needed), sockets bound to it, auto-reconnect when it returns | ✅ | 🟡 lock ok; loss/reconnect untested |
+| Locked Tello Wi-Fi (no Internet needed), sockets bound to it, auto-reconnect when it returns | ✅ | 🟡 lock + loss alert ok; auto-reconnect untested |
 | Connection quality + last-packet indicators (state & video) | ✅ | 🟡 nominal (green) only |
 | Xbox Mode 2 mapping, rescaled dead-zone | ✅ | ✅ |
 | Held-stick input pump (a steady stick is not treated as stale) | ✅ | ✅ |
