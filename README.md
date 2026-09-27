@@ -114,6 +114,13 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 - [ ] Hovering over a pad shows `PAD #n x y z` in the HUD, values change when moving
 - [ ] Pad columns filled in the flight log
 
+### Target tracking (vision only — the drone is not steered yet)
+- [ ] Tap a textured object in the video → green box on it; a flat area shows "Nothing to track there"
+- [ ] Box follows when the object or the drone moves slowly; TARGET % stays high
+- [ ] Object hidden → red "TARGET LOST", box re-acquires when it comes back
+- [ ] Long-press on the video or ✕ TARGET clears it
+- [ ] Video stays smooth while tracking (no added lag)
+
 ### App & updates
 - [ ] Settings page full screen in landscape (not offset), two columns, back button closes it
 - [ ] With Settings open, the controller still works (B lands)
