@@ -115,7 +115,8 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 - [ ] Pad columns filled in the flight log
 
 ### App & updates
-- [ ] Settings page readable in landscape (two columns)
+- [ ] Settings page full screen in landscape (not offset), two columns, back button closes it
+- [ ] With Settings open, the controller still works (B lands)
 - [ ] Settings kept after restarting the app
 - [ ] UPDATE installs the next release (phone on a Wi-Fi with Internet)
 - [ ] Screen stays on during a flight

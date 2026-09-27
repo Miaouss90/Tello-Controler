@@ -22,7 +22,8 @@ Hardware validation status: [README › Hardware checklist](README.md#hardware-c
 - README **Hardware checklist** of every on-drone verification.
 
 ### Changed
-- **Settings** is a full-screen two-column page (usable in landscape).
+- **Settings** is a full-screen two-column layer (usable in landscape, not offset); the controller keeps working
+  while it is open.
 - Versions are sequential within a line (`0.5.0`, `0.5.1`…) instead of the CI run number.
 
 ### Fixed
