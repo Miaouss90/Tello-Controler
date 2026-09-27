@@ -1,6 +1,8 @@
 package com.miaouss90.tellocontroler
 
 import android.os.Bundle
+import android.content.Intent
+import android.net.Uri
 import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
@@ -12,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import com.miaouss90.tellocontroler.controller.XboxController
 
 class MainActivity:ComponentActivity() {
@@ -40,6 +43,7 @@ class MainActivity:ComponentActivity() {
                     Text("BAT ${t.batteryPercent}%"); Text("ALT ${t.heightCm} cm"); Text("TOF ${t.tofCm} cm"); Text("YAW ${t.yaw}°")
                 }
                 Row(Modifier.align(Alignment.BottomEnd),horizontalArrangement=Arrangement.spacedBy(8.dp)){
+                    SettingsButton()
                     if(!connected) Button(onClick={vm.connect()}){Text("CONNECT")}
                     Button(onClick={vm.takeoff()}){Text("TAKE OFF")}
                     Button(onClick={vm.land()}){Text("LAND")}
@@ -47,4 +51,24 @@ class MainActivity:ComponentActivity() {
             }
         }
     }
+}
+
+
+@Composable
+private fun SettingsButton() {
+    val context = LocalContext.current
+    var open by remember { mutableStateOf(false) }
+    TextButton(onClick={open=true}) { Text("SETTINGS") }
+    if(open) AlertDialog(
+        onDismissRequest={open=false},
+        title={ Text("Settings") },
+        text={ Column(verticalArrangement=Arrangement.spacedBy(12.dp)) {
+            Text("Tello Controler V0.2.0")
+            Text("Updates are distributed through GitHub Releases.")
+            OutlinedButton(onClick={
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Miaouss90/Tello-Controler/releases/latest")))
+            }) { Text("CHECK FOR UPDATES") }
+        }},
+        confirmButton={ TextButton(onClick={open=false}) { Text("CLOSE") } }
+    )
 }
