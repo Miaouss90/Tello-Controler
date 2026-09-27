@@ -7,6 +7,8 @@ Hardware validation status: [README › Hardware checklist](README.md#hardware-c
 ## 0.5 — 2026-09-27
 
 ### Added
+- **FOLLOW mode** (RB / HUD): yaw and altitude corrections keep the tracked target centered; any stick input
+  takes over, and follow stops on landing, link loss or a target lost for 2 s (with rumble).
 - **Target tracking (preview)**: tap an object in the video, a box tracks it (template matching on a
   downscaled frame, ~10 Hz, off the UI thread); long-press or ✕ TARGET clears. Does not steer the drone yet.
 - **Flight modes**: Standard, **Indoor** (≤ 35 % speed, soft sticks, height ≤ 150 cm) and **Cinematic** (≤ 30 %,

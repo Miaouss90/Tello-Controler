@@ -13,7 +13,7 @@ Best "wow / effort" ratio, in order (Slow/Normal/Sport rates already shipped):
 3. ~~Controller rumble on alerts (M4)~~ — validated (arming, Wi-Fi loss).
 4. ~~Video + telemetry recording, flight recorder (M5)~~ — coded, awaiting hardware check.
 5. ~~Mission Pads (M6)~~ — detection coded, awaiting hardware check.
-6. Visual target tracking (M7).
+6. ~~Visual target tracking (M7)~~ — preview + FOLLOW coded, awaiting hardware check.
 7. Mission editor (M6).
 
 **Rules for every assisted/automatic feature (M2, M6, M7):** stick input or LAND always overrides it instantly,
@@ -109,7 +109,7 @@ The feature that makes the app original rather than a remote-control clone.
 | QR / ArUco detection | ⬜ | ⬜ |
 | Color recognition | ⬜ | ⬜ |
 | Target tracking preview: tap to select, tracked box, lost/re-acquire (NCC template matching) | ✅ | ⬜ |
-| **Follow target**: gentle yaw/altitude corrections keep it centered, sticks override | ⬜ | ⬜ |
+| **Follow target**: gentle yaw/altitude corrections keep it centered, sticks override | ✅ | ⬜ |
 | Person tracking | ⬜ | ⬜ |
 | Orbit mode around a selected target (radius/speed) | ⬜ | ⬜ |
 | Gesture control (takeoff / land / photo) | ⬜ | ⬜ |
