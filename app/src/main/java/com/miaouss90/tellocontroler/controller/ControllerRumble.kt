@@ -22,7 +22,7 @@ object ControllerRumble {
     }
 
     private fun gamepadVibrator(): Vibrator? {
-        val device = InputDevice.getDeviceIds()
+        val device = InputDevice.getDeviceIds().asList()
             .mapNotNull { InputDevice.getDevice(it) }
             .firstOrNull { XboxController.isGamepad(it) }
             ?: return null
