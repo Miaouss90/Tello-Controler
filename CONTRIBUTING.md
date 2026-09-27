@@ -7,3 +7,6 @@ Use feature branches for non-trivial work. Prefer Conventional Commit-style mess
 
 ## Definition of done
 Code builds in CI, relevant docs/tests are updated, and hardware-dependent assumptions are explicitly marked until verified on a real Tello.
+
+## AI agents
+AI coding agents must follow [AGENTS.md](AGENTS.md) (structure, safety rules, definition of done).

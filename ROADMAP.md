@@ -8,9 +8,11 @@
 - [x] Xbox event mapping skeleton
 - [x] UDP video receiver
 - [x] GitHub Actions APK artifact
+- [x] Unit tests in CI (mapping, safety loop, parsers)
+- [x] Package structure + AGENTS.md for AI-assisted development
 - [ ] CI build passes and APK installs on the target Android phone
 - [ ] Command acknowledgement/state machine
-- [ ] Fixed-rate RC loop + stale-input watchdog
+- [x] Fixed-rate RC loop + stale-input watchdog
 - [ ] H.264 MediaCodec decoder and full-screen Surface
 - [ ] Polished dark FPV interface and coherent visual system
 - [ ] First-launch/connect experience suitable for phone testing
@@ -24,9 +26,10 @@
 - [x] Display current installed version
 - [ ] Native GitHub API version comparison and latest available version
 - [x] Controller connect/disconnect status
-- [ ] Configurable dead-zone
+- [x] Rescaled dead-zone (configurable value still pending)
 - [ ] Slow / Normal / Sport rates
 - [x] App lifecycle failsafe
+- [x] Guarded emergency stop (hold Menu 1 s)
 - [ ] Battery takeoff warning/guard
 - [x] Video RX diagnostics / packet indicator
 - [ ] Connection quality and last-packet indicators

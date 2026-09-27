@@ -40,9 +40,9 @@ The Tello SDK endpoint is `192.168.10.1:8889`; state is received on UDP `8890` a
 | Right stick Y | Pitch |
 | A | Takeoff |
 | B | Land |
-| Menu | Emergency (guarded / long-press planned) |
+| Menu (hold 1 s) | Emergency motor stop — release early to cancel |
 
-RC values are normalized to the Tello `rc a b c d` range. A configurable dead-zone and speed profiles are part of the roadmap.
+RC values are normalized to the Tello `rc a b c d` range with a rescaled 8 % dead-zone. Axis directions are **not yet verified on hardware**. A configurable dead-zone and speed profiles are part of the roadmap.
 
 ## Build & install
 
@@ -62,6 +62,7 @@ A signed release pipeline is planned after hardware validation.
 - [Safety](docs/SAFETY.md)
 - [Roadmap](ROADMAP.md)
 - [Contributing](CONTRIBUTING.md)
+- [AI agent guide](AGENTS.md)
 
 ## Development principles
 
