@@ -16,7 +16,12 @@
 - [ ] First-launch/connect experience suitable for phone testing
 - [ ] Real Tello EDU bench test
 
-## V0.2 — Safe manual flight
+## V0.2 — Safe manual flight & settings
+- [ ] Settings screen
+- [ ] In-app "Check for updates" action
+- [ ] Compare installed version with latest GitHub Release
+- [ ] Open/download the latest APK from GitHub Releases when an update is available
+- [ ] Display current version and latest available version
 - [ ] Controller connect/disconnect status
 - [ ] Configurable dead-zone
 - [ ] Slow / Normal / Sport rates
