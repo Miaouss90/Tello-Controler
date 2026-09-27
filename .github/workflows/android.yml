@@ -1,12 +1,10 @@
-name: Android CI & Continuous APK
+name: Android CI
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
-permissions:
-  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,25 +19,7 @@ jobs:
           gradle-version: '8.9'
       - name: Build debug APK
         run: gradle assembleDebug
-      - name: Name APK
-        if: github.event_name != 'pull_request'
-        run: cp app/build/outputs/apk/debug/app-debug.apk Tello-Controler-latest.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Tello-Controler-debug
           path: app/build/outputs/apk/debug/app-debug.apk
-      - name: Publish continuous APK
-        if: github.event_name != 'pull_request'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: continuous
-          name: Tello Controler — Latest development build
-          prerelease: true
-          make_latest: false
-          files: Tello-Controler-latest.apk
-          body: |
-            Automatically updated APK built from the latest successful commit on main.
-
-            **Installation:** download Tello-Controler-latest.apk directly on Android and open it.
-            This is a development build intended for iterative Tello hardware testing.
-          token: ${{ secrets.GITHUB_TOKEN }}
