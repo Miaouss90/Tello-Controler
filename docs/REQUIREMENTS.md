@@ -14,6 +14,9 @@ Operate a Tello EDU from an Android phone while viewing live video. The owner do
 - V0.1: control, telemetry, live video and safety.
 - Touch controls, recording and computer vision are later features.
 
+## V0.1 definition
+V0.1 is the first build installed and launched on the owner's Android phone. It must already present a deliberate, polished landscape FPV interface; visual quality is part of the acceptance criteria, not a later cosmetic task.
+
 ## First flight-capable acceptance criteria
 1. Enter SDK mode and verify a response.
 2. Receive telemetry continuously.
