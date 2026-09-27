@@ -24,6 +24,7 @@ app/src/main/java/com/miaouss90/tellocontroler/
 │   ├── RcInput.kt           rc a b c d value object (-100..100)
 │   ├── StickMapper.kt       PURE axis → RcInput (dead-zone, Mode 2 layout)      [unit-tested]
 │   ├── XboxController.kt    Android MotionEvent/KeyEvent adapter → StickMapper
+│   ├── RcShaper.kt          PURE height limit + smoothing inside the RC loop    [unit-tested]
 │   └── RcSafetyLoop.kt      SAFETY-CRITICAL fixed-rate sender + stale watchdog  [unit-tested]
 ├── tello/                   Aircraft protocol (see docs/PROTOCOL.md)
 │   ├── TelloClient.kt       UDP 8889 commands+acks / 8890 state, connection state, link watchdog

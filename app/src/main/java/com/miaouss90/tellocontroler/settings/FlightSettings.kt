@@ -23,14 +23,23 @@ data class FlightSettings(
     val rumbleAlerts: Boolean = true,
     val flightLogs: Boolean = true,
     val missionPads: Boolean = false,
+    val mode: FlightMode = FlightMode.STANDARD,
+    /** 0 = linear, higher = finer control around the stick center. */
+    val expo: Float = 0f,
+    /** Height limit in cm, 0 = off. */
+    val maxHeightCm: Int = 0,
 ) {
     companion object {
         val DEAD_ZONE_RANGE = 0.02f..0.25f
         val MIN_BATTERY_RANGE = 10..50
+        val EXPO_RANGE = 0f..0.8f
+        val MAX_HEIGHT_RANGE = 0..800
     }
 
     fun sanitized() = copy(
         deadZone = deadZone.coerceIn(DEAD_ZONE_RANGE),
         minTakeoffBatteryPercent = minTakeoffBatteryPercent.coerceIn(MIN_BATTERY_RANGE),
+        expo = expo.coerceIn(EXPO_RANGE),
+        maxHeightCm = maxHeightCm.coerceIn(MAX_HEIGHT_RANGE),
     )
 }

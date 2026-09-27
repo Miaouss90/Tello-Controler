@@ -55,9 +55,9 @@ Everything `docs/SAFETY.md` requires before flying, plus the bench test that val
 | HUD stick indicators (RC actually sent) | ✅ | ⬜ |
 | Landing detection (motor-time freeze ⇒ landed) | ✅ | ⬜ |
 | Neutral RC on controller loss | ✅ | ⬜ |
-| Stick expo curves (fine control around center) | ⬜ | ⬜ |
-| Flight modes: **Indoor** (slow, soft sticks, height ≤ 1.5 m) and **Cinematic** (filtered, very slow moves) | ⬜ | ⬜ |
-| Speed & height limits (safety bubble, height part) | ⬜ | ⬜ |
+| Stick expo curves (fine control around center) | ✅ | ⬜ |
+| Flight modes: **Indoor** (slow, soft sticks, height ≤ 1.5 m) and **Cinematic** (filtered, very slow moves) | ✅ | ⬜ |
+| Speed & height limits (safety bubble, height part; speed via rate/mode caps) | ✅ | ⬜ |
 | Simplified altitude hold (throttle stick centered = hold, relies on Tello's own hold) | ⬜ | ⬜ |
 
 ## M3 — FPV cockpit

@@ -18,13 +18,17 @@ import java.util.concurrent.atomic.AtomicReference
 class RcSafetyLoop(
     private val send: (RcInput) -> Unit,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** Applied to fresh input only (flight-mode smoothing, height limit). */
+    private val shape: (RcInput) -> RcInput = { it },
+    /** Called whenever the loop forces neutral, so stateful shaping restarts from zero. */
+    private val onNeutralized: () -> Unit = {},
 ) {
     companion object {
         const val PERIOD_MS = 50L
         const val STALE_MS = 250L
     }
 
-    private data class Timed(val input: RcInput, val at: Long)
+    private data class Timed(val input: RcInput, val at: Long, val forced: Boolean = false)
 
     private val latest = AtomicReference(Timed(RcInput.NEUTRAL, 0))
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -32,7 +36,7 @@ class RcSafetyLoop(
     fun start() {
         scope.launch {
             while (isActive) {
-                send(commandAt(clock()))
+                send(nextCommand(clock()))
                 delay(PERIOD_MS)
             }
         }
@@ -40,7 +44,19 @@ class RcSafetyLoop(
 
     fun update(input: RcInput) = latest.set(Timed(input, clock()))
 
-    fun neutral() = latest.set(Timed(RcInput.NEUTRAL, clock()))
+    /** Explicit neutral (pause, controller lost): immediate, never smoothed. */
+    fun neutral() = latest.set(Timed(RcInput.NEUTRAL, clock(), forced = true))
+
+    /**
+     * What the loop sends at [now]: the shaped fresh input, or an immediate neutral — stale input and explicit
+     * neutral bypass shaping so no smoothing ever delays a stop.
+     */
+    fun nextCommand(now: Long): RcInput {
+        val v = latest.get()
+        if (now - v.at <= STALE_MS && !v.forced) return shape(v.input)
+        onNeutralized()
+        return RcInput.NEUTRAL
+    }
 
     /** The command the loop would send at time [now]. */
     fun commandAt(now: Long): RcInput {

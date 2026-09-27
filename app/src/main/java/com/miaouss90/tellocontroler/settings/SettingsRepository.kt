@@ -19,6 +19,9 @@ class SettingsRepository(context: Context) {
         const val KEY_RUMBLE_ALERTS = "rumble_alerts"
         const val KEY_FLIGHT_LOGS = "flight_logs"
         const val KEY_MISSION_PADS = "mission_pads"
+        const val KEY_MODE = "flight_mode"
+        const val KEY_EXPO = "expo"
+        const val KEY_MAX_HEIGHT = "max_height_cm"
     }
 
     private val prefs = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
@@ -39,6 +42,9 @@ class SettingsRepository(context: Context) {
             .putBoolean(KEY_RUMBLE_ALERTS, next.rumbleAlerts)
             .putBoolean(KEY_FLIGHT_LOGS, next.flightLogs)
             .putBoolean(KEY_MISSION_PADS, next.missionPads)
+            .putString(KEY_MODE, next.mode.name)
+            .putFloat(KEY_EXPO, next.expo)
+            .putInt(KEY_MAX_HEIGHT, next.maxHeightCm)
             .apply()
     }
 
@@ -55,6 +61,9 @@ class SettingsRepository(context: Context) {
             rumbleAlerts = prefs.getBoolean(KEY_RUMBLE_ALERTS, defaults.rumbleAlerts),
             flightLogs = prefs.getBoolean(KEY_FLIGHT_LOGS, defaults.flightLogs),
             missionPads = prefs.getBoolean(KEY_MISSION_PADS, defaults.missionPads),
+            mode = FlightMode.entries.firstOrNull { it.name == prefs.getString(KEY_MODE, null) } ?: defaults.mode,
+            expo = prefs.getFloat(KEY_EXPO, defaults.expo),
+            maxHeightCm = prefs.getInt(KEY_MAX_HEIGHT, defaults.maxHeightCm),
         ).sanitized()
     }
 }
