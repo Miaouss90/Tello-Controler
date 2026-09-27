@@ -6,8 +6,11 @@ name: Android CI
 on:
   push:
     branches: [ main ]
+    # Documentation-only changes do not publish a new (identical) release.
+    paths-ignore: [ '**.md' ]
   pull_request:
     branches: [ main ]
+    paths-ignore: [ '**.md' ]
   workflow_dispatch:
 
 concurrency:
