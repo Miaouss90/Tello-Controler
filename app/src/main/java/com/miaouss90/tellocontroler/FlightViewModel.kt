@@ -113,9 +113,14 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { wifi.network.collect { onTelloNetwork(it) } }
         viewModelScope.launch {
             wifi.state.collect {
-                if (it == TelloWifiState.UNAVAILABLE) {
-                    wantConnected = false
-                    showNotice("Tello Wi-Fi not found or not approved")
+                when (it) {
+                    TelloWifiState.UNAVAILABLE -> {
+                        wantConnected = false
+                        showNotice("Tello Wi-Fi not found or not approved")
+                    }
+                    // Re-arm at once: the new request waits for the Tello access point to come back.
+                    TelloWifiState.LOST -> if (wantConnected) wifi.request()
+                    else -> Unit
                 }
             }
         }
