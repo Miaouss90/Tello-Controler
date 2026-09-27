@@ -10,6 +10,10 @@ data class TelloTelemetry(
     val flightTimeSeconds: Int = 0,
     val tofCm: Int = 0,
     val temperatureC: Double = 0.0,
+    /** Velocity `vgx/vgy/vgz`, raw SDK units (dm/s per SDK 3.0). HARDWARE-UNVERIFIED unit. */
+    val speedX: Int = 0,
+    val speedY: Int = 0,
+    val speedZ: Int = 0,
 ) {
     companion object {
         fun parse(raw: String): TelloTelemetry {
@@ -29,6 +33,9 @@ data class TelloTelemetry(
                 flightTimeSeconds = int("time"),
                 tofCm = int("tof"),
                 temperatureC = listOf(int("templ"), int("temph")).average(),
+                speedX = int("vgx"),
+                speedY = int("vgy"),
+                speedZ = int("vgz"),
             )
         }
     }

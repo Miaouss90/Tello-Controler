@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.net.DatagramSocket
@@ -89,6 +89,10 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _flightState = MutableStateFlow(FlightState.LANDED)
     val flightState = _flightState.asStateFlow()
+
+    /** Wall-clock time the motors started for the current flight, null on the ground (HUD flight timer). */
+    private val _flightStartedAt = MutableStateFlow<Long?>(null)
+    val flightStartedAt = _flightStartedAt.asStateFlow()
 
     private val _controllerConnected = MutableStateFlow(false)
     val controllerConnected = _controllerConnected.asStateFlow()
@@ -344,7 +348,13 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         CommandResult.Unconfirmed -> "sent, not confirmed"
     }
 
-    private fun reduce(event: FlightEvent) = _flightState.update { FlightStateMachine.reduce(it, event) }
+    private fun reduce(event: FlightEvent) {
+        val state = _flightState.updateAndGet { FlightStateMachine.reduce(it, event) }
+        when {
+            state == FlightState.LANDED -> _flightStartedAt.value = null
+            _flightStartedAt.value == null -> _flightStartedAt.value = System.currentTimeMillis()
+        }
+    }
 
     private fun showNotice(message: String) {
         _notice.value = message

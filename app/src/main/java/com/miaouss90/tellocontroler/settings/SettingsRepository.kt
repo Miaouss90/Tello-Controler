@@ -13,6 +13,9 @@ class SettingsRepository(context: Context) {
         const val KEY_DEAD_ZONE = "dead_zone"
         const val KEY_MIN_BATTERY = "min_takeoff_battery"
         const val KEY_TOUCH_STICKS = "touch_sticks"
+        const val KEY_HUD_HORIZON = "hud_horizon"
+        const val KEY_HUD_HEADING = "hud_heading"
+        const val KEY_HUD_RETICLE = "hud_reticle"
     }
 
     private val prefs = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
@@ -27,6 +30,9 @@ class SettingsRepository(context: Context) {
             .putFloat(KEY_DEAD_ZONE, next.deadZone)
             .putInt(KEY_MIN_BATTERY, next.minTakeoffBatteryPercent)
             .putBoolean(KEY_TOUCH_STICKS, next.touchSticks)
+            .putBoolean(KEY_HUD_HORIZON, next.hudHorizon)
+            .putBoolean(KEY_HUD_HEADING, next.hudHeading)
+            .putBoolean(KEY_HUD_RETICLE, next.hudReticle)
             .apply()
     }
 
@@ -37,6 +43,9 @@ class SettingsRepository(context: Context) {
             deadZone = prefs.getFloat(KEY_DEAD_ZONE, defaults.deadZone),
             minTakeoffBatteryPercent = prefs.getInt(KEY_MIN_BATTERY, defaults.minTakeoffBatteryPercent),
             touchSticks = prefs.getBoolean(KEY_TOUCH_STICKS, defaults.touchSticks),
+            hudHorizon = prefs.getBoolean(KEY_HUD_HORIZON, defaults.hudHorizon),
+            hudHeading = prefs.getBoolean(KEY_HUD_HEADING, defaults.hudHeading),
+            hudReticle = prefs.getBoolean(KEY_HUD_RETICLE, defaults.hudReticle),
         ).sanitized()
     }
 }
