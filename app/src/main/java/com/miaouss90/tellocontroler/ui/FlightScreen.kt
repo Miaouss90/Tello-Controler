@@ -151,12 +151,15 @@ fun FlightScreen(vm: FlightViewModel) {
             }
 
             if (showTouchSticks) {
+                // With a controller the touch sticks are dimmed; dragging one is a deliberate takeover.
                 TouchStick(
                     onChange = { x, y, active -> vm.touchLeft(x, y, active) },
+                    dimmed = controllerConnected,
                     modifier = Modifier.align(Alignment.CenterStart).padding(start = 24.dp),
                 )
                 TouchStick(
                     onChange = { x, y, active -> vm.touchRight(x, y, active) },
+                    dimmed = controllerConnected,
                     modifier = Modifier.align(Alignment.CenterEnd).padding(end = 24.dp),
                 )
             }

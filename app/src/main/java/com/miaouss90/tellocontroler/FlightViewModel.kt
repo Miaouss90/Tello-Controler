@@ -336,15 +336,25 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun touchLeft(x: Float, y: Float, active: Boolean) {
+        announceTouchTakeover(active)
         touchLeftActive = active
         touchAxes = touchAxes.copy(leftX = if (active) x else 0f, leftY = if (active) y else 0f)
         pumpInput()
     }
 
     fun touchRight(x: Float, y: Float, active: Boolean) {
+        announceTouchTakeover(active)
         touchRightActive = active
         touchAxes = touchAxes.copy(rightX = if (active) x else 0f, rightY = if (active) y else 0f)
         pumpInput()
+    }
+
+    /** With a controller connected, touching a (dimmed) touch stick is a deliberate takeover: say so. */
+    private fun announceTouchTakeover(active: Boolean) {
+        val wasTouching = touchLeftActive || touchRightActive
+        if (active && !wasTouching && _controllerConnected.value) {
+            showNotice("Touch sticks took control — release to give it back to the controller")
+        }
     }
 
     fun neutralControls() = rcLoop.neutral()
