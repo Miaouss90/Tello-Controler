@@ -28,6 +28,7 @@ app/src/main/java/com/miaouss90/tellocontroler/
 ├── tello/                   Aircraft protocol (see docs/PROTOCOL.md)
 │   ├── TelloClient.kt       UDP 8889 commands+acks / 8890 state, connection state, link watchdog
 │   ├── LinkMonitor.kt       PURE packet freshness / rate tracker                 [unit-tested]
+│   ├── TelloWifiManager.kt  explicit Internet-less TELLO-* Wi-Fi (WifiNetworkSpecifier), lost/locked state
 │   ├── TelloCommands.kt     PURE command string builders                         [unit-tested]
 │   ├── TelloTelemetry.kt    PURE state packet parser                             [unit-tested]
 │   ├── TelloVideoReceiver.kt UDP 11111 transport
@@ -91,8 +92,11 @@ gradle assembleRelease     # APK → app/build/outputs/apk/release/app-release.a
 6. `emergency` (motor cut, the drone falls) requires holding Menu ≥ `FlightViewModel.EMERGENCY_HOLD_MS`.
    Never map it to a single tap or an on-screen button without a guard.
 7. `CONNECTED` means the Tello acknowledged `command` with `ok` — never assume it.
-8. In-app update is disabled while connected to the Tello (installing kills the app mid-flight).
-9. Anything not verified on a real Tello is marked `HARDWARE-UNVERIFIED` in code/docs. Don't remove the mark
+8. Tello sockets are bound **per socket** to the Tello `Network` (`network.bindSocket`), never with
+   `bindProcessToNetwork` (the update needs Internet over mobile data). Wi-Fi lost ⇒ held input dropped,
+   LINK_LOST, takeoff blocked.
+9. In-app update is disabled while connected to the Tello (installing kills the app mid-flight).
+10. Anything not verified on a real Tello is marked `HARDWARE-UNVERIFIED` in code/docs. Don't remove the mark
    (or tick the ROADMAP "Hardware" column) unless the owner reports a successful hardware test.
 
 Changes touching these areas must include/adjust unit tests and mention the safety impact in the commit body.

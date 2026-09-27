@@ -21,11 +21,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.miaouss90.tellocontroler.tello.TelloConnectionState
+import com.miaouss90.tellocontroler.tello.TelloWifiManager
+import com.miaouss90.tellocontroler.tello.TelloWifiState
 import com.miaouss90.tellocontroler.ui.theme.HudColors
 
 /** Guided pre-flight setup shown until video arrives. Every step reflects live state. */
 @Composable
 fun SetupChecklist(
+    wifiState: TelloWifiState,
     connection: TelloConnectionState,
     controllerConnected: Boolean,
     touchSticks: Boolean,
@@ -41,9 +44,15 @@ fun SetupChecklist(
         Column(Modifier.padding(20.dp).width(460.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("PRE-FLIGHT SETUP", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Step(
-                done = connected,
-                title = "1. Power on the Tello and join its Wi-Fi (TELLO-xxxxxx)",
-                action = "WI-FI" to { open(Settings.ACTION_WIFI_SETTINGS) },
+                done = wifiState == TelloWifiState.LOCKED,
+                title = "1. Power on the Tello. Wi-Fi ${TelloWifiManager.SSID_PREFIX}xxxxxx: " + when (wifiState) {
+                    TelloWifiState.IDLE -> "press CONNECT"
+                    TelloWifiState.SEARCHING -> "searching… approve it in the system dialog"
+                    TelloWifiState.LOCKED -> "locked"
+                    TelloWifiState.LOST -> "lost, waiting for it to come back…"
+                    TelloWifiState.UNAVAILABLE -> "not found or refused, retry CONNECT"
+                },
+                action = "WI-FI SETTINGS" to { open(Settings.ACTION_WIFI_SETTINGS) },
             )
             Step(
                 done = controllerConnected || touchSticks,

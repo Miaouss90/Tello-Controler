@@ -8,7 +8,9 @@ Target: Tello EDU / RoboMaster TT SDK 3.0.
 | State | local UDP 8890 |
 | Video | local UDP 11111 |
 
-Startup target: open transport -> send `command` -> confirm SDK acknowledgement -> send `streamon` -> receive/decode video.
+Startup sequence: lock the `TELLO-*` Wi-Fi as an explicit Internet-less network -> bind sockets to it -> send `command` -> confirm `ok` -> send `streamon` -> receive/decode video.
+
+Android routes unbound sockets through the *default* network, which is mobile data when the Wi-Fi has no Internet: every Tello socket must be bound to the Tello `Network`.
 
 Manual control uses `rc a b c d` for left/right, forward/back, up/down and yaw velocity values in the SDK-defined range.
 
