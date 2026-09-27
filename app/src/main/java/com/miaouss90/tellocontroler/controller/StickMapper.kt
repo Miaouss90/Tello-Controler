@@ -11,7 +11,7 @@ import kotlin.math.sign
  * left stick X = yaw, left stick Y = throttle, right stick X = roll, right stick Y = pitch.
  * Android reports stick "up" as negative Y, so Y axes are inverted.
  *
- * HARDWARE-UNVERIFIED: axis directions must be confirmed on a real Tello (see docs/SAFETY.md).
+ * Axis directions validated on a real Tello EDU (2026-09-27).
  */
 object StickMapper {
     const val DEFAULT_DEAD_ZONE = 0.08f
