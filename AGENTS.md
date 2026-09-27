@@ -96,7 +96,10 @@ gradle assembleRelease     # APK → app/build/outputs/apk/release/app-release.a
    `bindProcessToNetwork` (the update needs Internet over mobile data). Wi-Fi lost ⇒ held input dropped,
    LINK_LOST, takeoff blocked.
 9. In-app update is disabled while connected to the Tello (installing kills the app mid-flight).
-10. Anything not verified on a real Tello is marked `HARDWARE-UNVERIFIED` in code/docs. Don't remove the mark
+10. Assisted/automatic features (flight modes, missions, replay, vision tracking) feed `RcSafetyLoop` like any
+    input source: stick input or LAND overrides them instantly, they stop on link loss, and they respect the
+    M2 speed/height limits.
+11. Anything not verified on a real Tello is marked `HARDWARE-UNVERIFIED` in code/docs. Don't remove the mark
    (or tick the ROADMAP "Hardware" column) unless the owner reports a successful hardware test.
 
 Changes touching these areas must include/adjust unit tests and mention the safety impact in the commit body.
