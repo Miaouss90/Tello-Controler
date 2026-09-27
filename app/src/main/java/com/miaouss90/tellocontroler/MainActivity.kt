@@ -21,7 +21,7 @@ class MainActivity:ComponentActivity() {
     private val vm by viewModels<FlightViewModel>()
     override fun onCreate(savedInstanceState:Bundle?){ super.onCreate(savedInstanceState); setContent { FlightScreen(vm) } }
     override fun onGenericMotionEvent(e:MotionEvent):Boolean {
-        XboxController.motion(e)?.let { vm.rc(it.roll,it.pitch,it.throttle,it.yaw); return true }
+        XboxController.motion(e)?.let { vm.controllerInput(it); return true }
         return super.onGenericMotionEvent(e)
     }
     override fun onKeyDown(keyCode:Int,event:KeyEvent):Boolean {
@@ -32,7 +32,8 @@ class MainActivity:ComponentActivity() {
 
 @Composable fun FlightScreen(vm:FlightViewModel){
     val t by vm.telemetry.collectAsState()
-    val connected by vm.connected.collectAsState()
+    val connection by vm.connection.collectAsState()
+    val connected = connection == com.miaouss90.tellocontroler.tello.TelloConnectionState.CONNECTED
     MaterialTheme {
         Surface(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize().padding(24.dp)) {
