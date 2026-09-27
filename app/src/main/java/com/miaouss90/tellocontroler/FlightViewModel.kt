@@ -1,6 +1,7 @@
 package com.miaouss90.tellocontroler
 
 import android.app.Application
+import android.net.Network
 import android.view.Surface
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,6 +24,8 @@ import com.miaouss90.tellocontroler.tello.TelloConnectionState
 import com.miaouss90.tellocontroler.tello.TelloH264Decoder
 import com.miaouss90.tellocontroler.tello.TelloTelemetry
 import com.miaouss90.tellocontroler.tello.TelloVideoReceiver
+import com.miaouss90.tellocontroler.tello.TelloWifiManager
+import com.miaouss90.tellocontroler.tello.TelloWifiState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +37,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.net.DatagramSocket
 
 /** Orchestrates transport, safety loop, flight state, video and settings. Holds no Android UI references. */
 class FlightViewModel(app: Application) : AndroidViewModel(app) {
@@ -45,12 +49,18 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private val client = TelloClient()
+    private val wifi = TelloWifiManager(app)
     private val settingsRepository = SettingsRepository(app)
     private val videoMonitor = LinkMonitor()
     private var videoReceiver: TelloVideoReceiver? = null
     private var decoder: TelloH264Decoder? = null
     private var emergencyJob: Job? = null
     private var noticeJob: Job? = null
+    private var videoSurface: Surface? = null
+    private var socketBinder: ((DatagramSocket) -> Unit)? = null
+
+    /** The user asked to fly: keep reconnecting the SDK whenever the Tello Wi-Fi comes back. */
+    @Volatile private var wantConnected = false
 
     // Input sources. Android only reports stick *changes*, so the controller position is held and
     // re-sent by the input pump while the controller is present and the app is in the foreground.
@@ -65,6 +75,7 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
     val lastResponse: StateFlow<String> = client.lastResponse
     val stateLink: StateFlow<LinkQuality> = client.stateLink
     val settings: StateFlow<FlightSettings> = settingsRepository.settings
+    val wifiState: StateFlow<TelloWifiState> = wifi.state
 
     private val _videoLink = MutableStateFlow(LinkQuality.NONE)
     val videoLink = _videoLink.asStateFlow()
@@ -89,6 +100,15 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         viewModelScope.launch { telemetry.collect { reduce(FlightEvent.Height(it.heightCm)) } }
+        viewModelScope.launch { wifi.network.collect { onTelloNetwork(it) } }
+        viewModelScope.launch {
+            wifi.state.collect {
+                if (it == TelloWifiState.UNAVAILABLE) {
+                    wantConnected = false
+                    showNotice("Tello Wi-Fi not found or not approved")
+                }
+            }
+        }
         viewModelScope.launch {
             while (isActive) {
                 _videoLink.value = videoMonitor.quality()
@@ -103,23 +123,52 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun connect() = client.connect()
+    /** Locks the Tello Wi-Fi first; the SDK handshake starts once the network is available. */
+    fun connect() {
+        wantConnected = true
+        if (wifi.state.value == TelloWifiState.LOCKED) client.connect() else wifi.request()
+    }
 
     fun startVideo(surface: Surface) {
         stopVideo()
+        videoSurface = surface
         videoMonitor.reset()
         decoder = TelloH264Decoder(surface).also { it.start() }
-        videoReceiver = TelloVideoReceiver {
+        startVideoReceiver()
+    }
+
+    fun stopVideo() {
+        videoSurface = null
+        videoReceiver?.stop()
+        videoReceiver = null
+        decoder?.stop()
+        decoder = null
+    }
+
+    private fun startVideoReceiver() {
+        videoReceiver?.stop()
+        videoReceiver = TelloVideoReceiver(socketBinder) {
             videoMonitor.onPacket()
             decoder?.offer(it)
         }.also { it.start() }
     }
 
-    fun stopVideo() {
-        videoReceiver?.stop()
-        videoReceiver = null
-        decoder?.stop()
-        decoder = null
+    private fun onTelloNetwork(network: Network?) {
+        if (network == null) {
+            if (socketBinder == null) return
+            // SAFETY: the aircraft is unreachable; drop held input so nothing resumes on reconnection.
+            socketBinder = null
+            controllerAxes = StickAxes.NEUTRAL
+            neutralControls()
+            client.onNetworkLost()
+            if (wantConnected) showNotice("Tello Wi-Fi lost, waiting for it to come back…")
+            return
+        }
+        val binder: (DatagramSocket) -> Unit = { network.bindSocket(it) }
+        socketBinder = binder
+        client.useNetwork(binder)
+        if (videoSurface != null) startVideoReceiver()
+        if (wantConnected) client.connect()
     }
 
     fun setForeground(value: Boolean) {
@@ -223,6 +272,7 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         stopVideo()
         rcLoop.stop()
         client.close()
+        wifi.release()
         super.onCleared()
     }
 

@@ -43,6 +43,7 @@ class TelloClient(clock: () -> Long = System::currentTimeMillis) {
 
     @Volatile private var commandSocket: DatagramSocket? = null
     @Volatile private var stateSocket: DatagramSocket? = null
+    @Volatile private var socketBinder: ((DatagramSocket) -> Unit)? = null
 
     private val _telemetry = MutableStateFlow(TelloTelemetry())
     val telemetry: StateFlow<TelloTelemetry> = _telemetry.asStateFlow()
@@ -78,6 +79,25 @@ class TelloClient(clock: () -> Long = System::currentTimeMillis) {
             } catch (_: Exception) {
                 _connection.value = TelloConnectionState.ERROR
             }
+        }
+    }
+
+    /**
+     * Routes all Tello sockets through a specific network (see TelloWifiManager). Existing sockets are
+     * closed: they may be bound to a network that no longer exists.
+     */
+    fun useNetwork(binder: ((DatagramSocket) -> Unit)?) {
+        socketBinder = binder
+        closeSockets()
+        if (_connection.value == TelloConnectionState.CONNECTED) _connection.value = TelloConnectionState.LINK_LOST
+    }
+
+    /** The Tello Wi-Fi disappeared: nothing can reach the aircraft any more. */
+    fun onNetworkLost() {
+        closeSockets()
+        val state = _connection.value
+        if (state == TelloConnectionState.CONNECTED || state == TelloConnectionState.CONNECTING) {
+            _connection.value = TelloConnectionState.LINK_LOST
         }
     }
 
@@ -139,18 +159,27 @@ class TelloClient(clock: () -> Long = System::currentTimeMillis) {
     }
 
     private fun openSockets() {
+        val binder = socketBinder
         if (commandSocket?.isClosed != false) {
             val socket = DatagramSocket()
+            binder?.invoke(socket)
             commandSocket = socket
             scope.launch { readResponses(socket) }
         }
         if (stateSocket?.isClosed != false) {
             // A bind failure is not fatal here: missing telemetry surfaces as LINK_LOST.
-            runCatching { DatagramSocket(STATE_PORT) }.getOrNull()?.let { socket ->
+            runCatching { DatagramSocket(STATE_PORT).also { binder?.invoke(it) } }.getOrNull()?.let { socket ->
                 stateSocket = socket
                 scope.launch { listenState(socket) }
             }
         }
+    }
+
+    private fun closeSockets() {
+        commandSocket?.close()
+        commandSocket = null
+        stateSocket?.close()
+        stateSocket = null
     }
 
     private fun readResponses(socket: DatagramSocket) {

@@ -27,6 +27,7 @@ import com.miaouss90.tellocontroler.tello.LinkLevel
 import com.miaouss90.tellocontroler.tello.LinkQuality
 import com.miaouss90.tellocontroler.tello.TelloConnectionState
 import com.miaouss90.tellocontroler.tello.TelloTelemetry
+import com.miaouss90.tellocontroler.tello.TelloWifiState
 import com.miaouss90.tellocontroler.ui.components.Banner
 import com.miaouss90.tellocontroler.ui.components.Metric
 import com.miaouss90.tellocontroler.ui.components.StatusPill
@@ -39,6 +40,7 @@ import com.miaouss90.tellocontroler.ui.theme.TelloTheme
 fun FlightScreen(vm: FlightViewModel) {
     val telemetry by vm.telemetry.collectAsState()
     val connection by vm.connection.collectAsState()
+    val wifiState by vm.wifiState.collectAsState()
     val stateLink by vm.stateLink.collectAsState()
     val videoLink by vm.videoLink.collectAsState()
     val lastResponse by vm.lastResponse.collectAsState()
@@ -61,6 +63,7 @@ fun FlightScreen(vm: FlightViewModel) {
 
             if (!videoActive) {
                 SetupChecklist(
+                    wifiState = wifiState,
                     connection = connection,
                     controllerConnected = controllerConnected,
                     touchSticks = settings.touchSticks,
@@ -70,7 +73,7 @@ fun FlightScreen(vm: FlightViewModel) {
                 )
             }
 
-            TopBar(connection, stateLink, videoLink, controllerConnected, telemetry, settings.minTakeoffBatteryPercent)
+            TopBar(wifiState, connection, stateLink, videoLink, controllerConnected, telemetry, settings.minTakeoffBatteryPercent)
 
             if (settings.touchSticks) {
                 TouchStick(
@@ -128,7 +131,9 @@ fun FlightScreen(vm: FlightViewModel) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                if (connection == TelloConnectionState.LINK_LOST) {
+                if (wifiState == TelloWifiState.LOST) {
+                    Banner("TELLO WI-FI LOST — sticks neutralized, reconnecting when it returns", HudColors.Red)
+                } else if (connection == TelloConnectionState.LINK_LOST) {
                     Banner("TELLO LINK LOST — no telemetry for ${(stateLink.lastPacketAgeMs ?: 0) / 1000} s", HudColors.Red)
                 }
                 if (emergencyArming) Banner("HOLD MENU — EMERGENCY MOTOR STOP", HudColors.Red)
@@ -140,6 +145,7 @@ fun FlightScreen(vm: FlightViewModel) {
 
 @Composable
 private fun TopBar(
+    wifiState: TelloWifiState,
     connection: TelloConnectionState,
     stateLink: LinkQuality,
     videoLink: LinkQuality,
@@ -166,6 +172,15 @@ private fun TopBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatusPill(
+                "WIFI",
+                when (wifiState) {
+                    TelloWifiState.LOCKED -> HudColors.Green
+                    TelloWifiState.SEARCHING -> HudColors.Amber
+                    TelloWifiState.LOST, TelloWifiState.UNAVAILABLE -> HudColors.Red
+                    TelloWifiState.IDLE -> HudColors.Muted
+                },
+            )
             StatusPill("TELLO", tello)
             StatusPill("VIDEO", videoLink.level.color())
             StatusPill("XBOX", if (controllerConnected) HudColors.Green else HudColors.Muted)

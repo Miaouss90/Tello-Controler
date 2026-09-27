@@ -15,7 +15,7 @@ All implemented; **none validated on hardware yet** (see ROADMAP M1).
 - Flight-state-aware UI; landing is never blocked.
 
 ## Bench test procedure (M1)
-1. Props off: connect, verify telemetry, video, LINK_LOST when the Tello is switched off, reconnect.
+1. Props off: connect (approve the system Wi-Fi dialog), verify WIFI locked, telemetry, video; switch the Tello off → WIFI LOST banner and LINK_LOST; switch it on → automatic reconnection. Check mobile data still works in another app meanwhile.
 2. Props off: verify each stick axis direction and each rate (SLOW/NORMAL/SPORT) with `rc` values in the HUD diagnostics.
 3. Props off: hold a stick steady for 5 s and verify the command is maintained; switch the controller off and verify neutral.
 4. Tethered/open space: takeoff, hover, land; verify flight state transitions in the HUD.

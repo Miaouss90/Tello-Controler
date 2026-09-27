@@ -16,6 +16,7 @@ Everything `docs/SAFETY.md` requires before flying, plus the bench test that val
 | Flight state machine (landed / taking off / flying / landing) from acks + height | ✅ | ⬜ |
 | Telemetry parser | ✅ | ⬜ |
 | Link watchdog: LINK_LOST after 2 s without state, auto-recover, reconnect | ✅ | ⬜ |
+| Locked Tello Wi-Fi (no Internet needed), sockets bound to it, auto-reconnect when it returns | ✅ | ⬜ |
 | Connection quality + last-packet indicators (state & video) | ✅ | ⬜ |
 | Xbox Mode 2 mapping, rescaled dead-zone | ✅ | ⬜ axis directions |
 | Held-stick input pump (a steady stick is not treated as stale) | ✅ | ⬜ |

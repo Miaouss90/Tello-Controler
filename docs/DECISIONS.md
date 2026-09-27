@@ -43,3 +43,7 @@
 ## ADR-011 — Named milestones, versions only for delivery
 **Decision:** ROADMAP uses named milestones (M1 First safe flight, …) with separate Code/Hardware status; `telloVersionBase` is bumped for significant releases but does not encode milestones.
 **Why:** version names must only increase for in-app updates, while milestone progress depends on hardware validation.
+
+## ADR-012 — Explicit Tello Wi-Fi network with per-socket binding
+**Decision:** CONNECT requests an Internet-less Wi-Fi network (`WifiNetworkSpecifier` on `TELLO-*` for Android 10+, the current Wi-Fi on 8–9) and binds the command, state and video sockets to that `Network`. Losing it neutralizes held input, marks LINK_LOST and blocks takeoff; the SDK reconnects automatically when Android re-delivers the network.
+**Why:** Android deprioritizes Wi-Fi without Internet and routed Tello UDP traffic to mobile data, causing chaotic links. Per-socket binding (not `bindProcessToNetwork`) keeps Internet over mobile data for in-app updates.
