@@ -40,6 +40,10 @@ app/src/main/java/com/miaouss90/tellocontroler/
 │   ├── FlightLog.kt         PURE CSV format + per-flight FlightRecorder            [unit-tested]
 │   ├── VideoRecorder.kt     MediaMuxer MP4 without re-encoding
 │   └── MediaStorage.kt      MediaStore (Movies/Pictures/Download › TelloControler)
+├── vision/                  On-device vision
+│   ├── GrayFrame.kt         PURE luminance image
+│   ├── TemplateTracker.kt   PURE NCC template tracker                              [unit-tested]
+│   └── VisionFrameGrabber.kt PixelCopy of the video at 240×180 on a vision thread
 ├── update/                  In-app update from GitHub Releases
 │   ├── AppVersion.kt        PURE version comparison                              [unit-tested]
 │   ├── ReleaseInfo.kt       GitHub release JSON → APK asset                      [unit-tested]

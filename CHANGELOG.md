@@ -7,6 +7,8 @@ Hardware validation status: [README › Hardware checklist](README.md#hardware-c
 ## 0.5 — 2026-09-27
 
 ### Added
+- **Target tracking (preview)**: tap an object in the video, a box tracks it (template matching on a
+  downscaled frame, ~10 Hz, off the UI thread); long-press or ✕ TARGET clears. Does not steer the drone yet.
 - **Flight modes**: Standard, **Indoor** (≤ 35 % speed, soft sticks, height ≤ 150 cm) and **Cinematic** (≤ 30 %,
   smoothed movements); modes never make flight more aggressive than the user settings.
 - **Stick expo** and **height limit** (climb blocked at the limit, descent always allowed).

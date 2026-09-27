@@ -53,6 +53,7 @@ import com.miaouss90.tellocontroler.ui.hud.Reticle
 import com.miaouss90.tellocontroler.ui.theme.HudColors
 import kotlinx.coroutines.delay
 import com.miaouss90.tellocontroler.ui.theme.TelloTheme
+import com.miaouss90.tellocontroler.vision.VisionFrameGrabber
 
 @Composable
 fun FlightScreen(vm: FlightViewModel) {
@@ -100,6 +101,21 @@ fun FlightScreen(vm: FlightViewModel) {
                     .fillMaxHeight()
                     .aspectRatio(TelloH264Decoder.WIDTH.toFloat() / TelloH264Decoder.HEIGHT, matchHeightConstraintsFirst = true),
             )
+
+            val target by vm.target.collectAsState()
+            val visionActive by vm.visionActive.collectAsState()
+            VisionFrameGrabber(surfaceView, active = visionActive && videoActive, onFrame = { vm.onVisionFrame(it) })
+            if (videoActive) {
+                TargetLayer(
+                    target = target,
+                    onSelect = { x, y -> vm.selectTarget(x, y) },
+                    onClear = { vm.clearTarget() },
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxHeight()
+                        .aspectRatio(TelloH264Decoder.WIDTH.toFloat() / TelloH264Decoder.HEIGHT, matchHeightConstraintsFirst = true),
+                )
+            }
 
             if (connected) {
                 if (settings.hudHorizon) {
@@ -194,6 +210,9 @@ fun FlightScreen(vm: FlightViewModel) {
                 Modifier.align(Alignment.TopEnd).padding(top = 64.dp, end = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
+                if (visionActive) {
+                    OutlinedButton(onClick = { vm.clearTarget() }) { Text("✕ TARGET") }
+                }
                 OutlinedButton(enabled = videoActive, onClick = { vm.requestPhoto() }) { Text("X  PHOTO") }
                 val recording = recordingSince
                 OutlinedButton(onClick = { vm.toggleRecording() }) {

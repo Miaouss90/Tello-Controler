@@ -39,6 +39,9 @@ import com.miaouss90.tellocontroler.tello.TelloTelemetry
 import com.miaouss90.tellocontroler.tello.TelloVideoReceiver
 import com.miaouss90.tellocontroler.tello.TelloWifiManager
 import com.miaouss90.tellocontroler.tello.TelloWifiState
+import com.miaouss90.tellocontroler.vision.GrayFrame
+import com.miaouss90.tellocontroler.vision.TemplateTracker
+import com.miaouss90.tellocontroler.vision.TrackResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -59,6 +62,7 @@ import java.net.DatagramSocket
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicReference
 
 /** Orchestrates transport, safety loop, flight state, video and settings. Holds no Android UI references. */
 class FlightViewModel(app: Application) : AndroidViewModel(app) {
@@ -130,6 +134,18 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
     /** Wall-clock start of the current video recording, null when not recording. */
     private val _recordingSince = MutableStateFlow<Long?>(null)
     val recordingSince = _recordingSince.asStateFlow()
+
+    // Target tracking (vision only for now: it does not steer the aircraft).
+    private val tracker = TemplateTracker()
+    private val pendingSelection = AtomicReference<Pair<Float, Float>?>(null)
+    @Volatile private var clearTracker = false
+
+    /** True while the UI should grab frames for the tracker (a target is selected or being selected). */
+    private val _visionActive = MutableStateFlow(false)
+    val visionActive = _visionActive.asStateFlow()
+
+    private val _target = MutableStateFlow<TrackResult?>(null)
+    val target = _target.asStateFlow()
 
     /** The UI owns the SurfaceView, so it performs the frame grab when asked. */
     private val _photoRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -376,6 +392,37 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         emergencyJob?.cancel()
         emergencyJob = null
         _emergencyArming.value = false
+    }
+
+    /** Tap on the video at normalized (x, y): track what is there from the next frame. */
+    fun selectTarget(x: Float, y: Float) {
+        pendingSelection.set(x to y)
+        _visionActive.value = true
+    }
+
+    fun clearTarget() {
+        clearTracker = true
+        pendingSelection.set(null)
+        _visionActive.value = false
+        _target.value = null
+    }
+
+    /** Vision thread: one downscaled video frame. */
+    fun onVisionFrame(frame: GrayFrame) {
+        if (clearTracker) {
+            tracker.clear()
+            clearTracker = false
+        }
+        pendingSelection.getAndSet(null)?.let { (x, y) ->
+            if (!tracker.select(frame, x, y)) {
+                showNotice("Nothing to track there — pick a textured object")
+                if (!tracker.hasTarget) _visionActive.value = false
+                return
+            }
+        }
+        if (!tracker.hasTarget || !_visionActive.value) return
+        val result = tracker.track(frame)
+        if (_visionActive.value) _target.value = result
     }
 
     fun requestPhoto() {
