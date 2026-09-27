@@ -1,3 +1,5 @@
+<img src="docs/assets/app-icon-source.png" width="96" align="right" alt="App icon">
+
 # Tello-Controler 🚁🎮
 
 Native Android ground-control application for the **DJI/Ryze Tello EDU**, focused on low-latency manual flight, live video and Xbox controller support.

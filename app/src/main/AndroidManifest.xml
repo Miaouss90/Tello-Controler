@@ -5,7 +5,11 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <!-- In-app updates from GitHub Releases (the user grants it once in system settings). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
-    <application android:theme="@style/Theme.TelloControler" android:label="Tello Controler">
+    <application
+        android:theme="@style/Theme.TelloControler"
+        android:label="Tello Controler"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round">
         <activity android:name=".MainActivity" android:screenOrientation="landscape" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
