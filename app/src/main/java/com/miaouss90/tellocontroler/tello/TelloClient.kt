@@ -107,6 +107,13 @@ class TelloClient(clock: () -> Long = System::currentTimeMillis) {
 
     suspend fun land() = request("land", MOTION_ACK_TIMEOUT_MS, preempt = true)
 
+    /** Mission Pad detection with the downward camera (`mon` + `mdirection 0`), or off (`moff`). SDK 2.0. */
+    suspend fun setMissionPads(enabled: Boolean): CommandResult {
+        if (!enabled) return request("moff", ACK_TIMEOUT_MS)
+        val on = request("mon", ACK_TIMEOUT_MS)
+        return if (on == CommandResult.Ok) request("mdirection 0", ACK_TIMEOUT_MS) else on
+    }
+
     fun emergency() = send("emergency")
 
     fun close() {

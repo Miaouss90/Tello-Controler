@@ -16,4 +16,13 @@ class TelloTelemetryTest {
     fun `garbage yields defaults`() {
         assertEquals(TelloTelemetry(), TelloTelemetry.parse("not a state packet"))
     }
+
+    @Test
+    fun `mission pad parsed only when detected`() {
+        val seen = TelloTelemetry.parse("mid:3;x:12;y:-4;z:80;mpry:0,0,0;pitch:0;")
+        assertEquals(MissionPad(id = 3, xCm = 12, yCm = -4, zCm = 80), seen.missionPad)
+        assertEquals(null, TelloTelemetry.parse("mid:-1;x:0;y:0;z:0;").missionPad)
+        assertEquals(null, TelloTelemetry.parse("mid:-2;").missionPad)
+        assertEquals(null, TelloTelemetry.parse("pitch:0;").missionPad)
+    }
 }

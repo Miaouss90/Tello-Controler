@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.isActive
@@ -144,6 +145,18 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
     init {
         viewModelScope.launch { telemetry.collect { reduce(FlightEvent.Height(it.heightCm)) } }
         viewModelScope.launch { wifi.network.collect { onTelloNetwork(it) } }
+        viewModelScope.launch {
+            // Applied on every (re)connection and whenever the setting changes.
+            combine(connection, settings) { c, s -> (c == TelloConnectionState.CONNECTED) to s.missionPads }
+                .distinctUntilChanged()
+                .collect { (connected, enabled) ->
+                    if (!connected) return@collect
+                    val result = client.setMissionPads(enabled)
+                    if (enabled && result != CommandResult.Ok) {
+                        showNotice("Mission Pads unavailable: ${describe(result)} (Tello EDU / SDK 2.0 only)")
+                    }
+                }
+        }
         viewModelScope.launch {
             var previous: AlertInputs? = null
             combine(connection, wifi.state, telemetry, flightState, emergencyArming) { c, w, t, f, arming ->

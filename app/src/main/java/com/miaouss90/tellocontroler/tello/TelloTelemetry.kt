@@ -14,6 +14,8 @@ data class TelloTelemetry(
     val speedX: Int = 0,
     val speedY: Int = 0,
     val speedZ: Int = 0,
+    /** Detected Mission Pad (Tello EDU, detection enabled with `mon`), null when none. */
+    val missionPad: MissionPad? = null,
 ) {
     companion object {
         fun parse(raw: String): TelloTelemetry {
@@ -36,6 +38,9 @@ data class TelloTelemetry(
                 speedX = int("vgx"),
                 speedY = int("vgy"),
                 speedZ = int("vgz"),
+                missionPad = (values["mid"]?.toIntOrNull() ?: -2)
+                    .takeIf { it > 0 }
+                    ?.let { MissionPad(id = it, xCm = int("x"), yCm = int("y"), zCm = int("z")) },
             )
         }
     }

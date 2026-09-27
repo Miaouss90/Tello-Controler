@@ -152,6 +152,7 @@ fun FlightScreen(vm: FlightViewModel) {
                 videoLink = videoLink,
                 lastResponse = lastResponse,
                 rcOutput = rcOutput.takeUnless { showTouchSticks },
+                missionPadsEnabled = settings.missionPads,
                 modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
             )
 
@@ -285,6 +286,7 @@ private fun FlightData(
     videoLink: LinkQuality,
     lastResponse: String,
     rcOutput: RcInput?,
+    missionPadsEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -306,6 +308,15 @@ private fun FlightData(
             color = Color.White,
             fontSize = 12.sp,
         )
+        if (missionPadsEnabled) {
+            val pad = telemetry.missionPad
+            Text(
+                pad?.let { "PAD #${it.id}   x ${it.xCm}   y ${it.yCm}   z ${it.zCm} cm" } ?: "PAD —  (no Mission Pad in view)",
+                color = if (pad != null) HudColors.Green else HudColors.Muted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
         Text(
             "LINK ${stateLink.describe()}   VIDEO ${videoLink.describe()}   LAST ${lastResponse.ifEmpty { "—" }}",
             color = HudColors.Muted,
