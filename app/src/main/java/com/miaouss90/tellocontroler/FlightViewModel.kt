@@ -220,9 +220,14 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
         videoReceiver?.stop()
         videoReceiver = TelloVideoReceiver(socketBinder) { chunk ->
             videoMonitor.onPacket()
-            nalSplitter.push(chunk).forEach { nal ->
+            val endOfFrame = chunk.size < TelloVideoReceiver.FULL_PACKET_BYTES
+            nalSplitter.push(chunk, endOfFrame).forEach { nal ->
                 decoder?.offerNal(nal)
                 videoRecorder?.onNal(nal)
+            }
+            if (endOfFrame) {
+                decoder?.endOfFrame()
+                videoRecorder?.endOfFrame()
             }
         }.also { it.start() }
     }
@@ -307,6 +312,9 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
             if (result != CommandResult.Ok) showNotice("Takeoff: ${describe(result)}")
         }
     }
+
+    /** Pilot says the aircraft is on the ground: re-enables takeoff when no automatic signal did. */
+    fun markLanded() = reduce(FlightEvent.ManualLanded)
 
     /** SAFETY: landing is never blocked by flight state or guards. */
     fun land() {
@@ -448,7 +456,12 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun checkMotorsStopped() {
         if (stateLink.value.level != LinkLevel.GOOD) return
-        if (motorStopDetector.onTelemetry(telemetry.value.flightTimeSeconds, System.currentTimeMillis())) {
+        val now = System.currentTimeMillis()
+        val stopped = motorStopDetector.onTelemetry(telemetry.value.flightTimeSeconds, now)
+        if (!stopped && flightState.value == FlightState.LANDED && motorStopDetector.motorsRunning(now)) {
+            reduce(FlightEvent.MotorsRunning)
+        }
+        if (stopped) {
             motorStopDetector.reset()
             if (flightState.value != FlightState.LANDED) {
                 reduce(FlightEvent.MotorsStopped)
@@ -486,6 +499,7 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
     private fun reduce(event: FlightEvent) {
         val before = _flightState.value
         val state = _flightState.updateAndGet { FlightStateMachine.reduce(it, event) }
+        if (state == FlightState.LANDED && before != FlightState.LANDED) motorStopDetector.reset()
         if (state != before) viewModelScope.launch(Dispatchers.IO) { recordFlightSample("state:$state") }
         when {
             state == FlightState.LANDED -> _flightStartedAt.value = null

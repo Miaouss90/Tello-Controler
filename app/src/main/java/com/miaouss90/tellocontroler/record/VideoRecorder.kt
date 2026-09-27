@@ -25,6 +25,12 @@ class VideoRecorder(private val target: MediaStorage.Target, private val clockNs
         runCatching { assembler.push(nal).forEach(::write) }
     }
 
+    @Synchronized
+    fun endOfFrame() {
+        if (stopped) return
+        runCatching { assembler.flush().forEach(::write) }
+    }
+
     /** Finalizes the file; returns true when at least one frame was saved. */
     @Synchronized
     fun stop(): Boolean {

@@ -26,4 +26,13 @@ class NalSplitterTest {
         assertEquals(false, AnnexB.startsNewFrame(sliceCont))
         assertEquals(false, AnnexB.startsNewFrame(bytes(0, 0, 0, 1, 0x67, 0x88)))
     }
+
+    @Test
+    fun `end of frame flushes the pending NAL`() {
+        val s = NalSplitter()
+        val nals = s.push(bytes(0, 0, 0, 1, 0x65, 0x88, 0x11), endOfFrame = true)
+        assertEquals(1, nals.size)
+        assertEquals(7, nals[0].size)
+        assertEquals(0, s.push(bytes(0, 0, 0, 1, 0x41)).size)
+    }
 }

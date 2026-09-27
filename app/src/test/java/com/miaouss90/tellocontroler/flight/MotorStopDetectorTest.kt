@@ -32,4 +32,18 @@ class MotorStopDetectorTest {
         detector.onTelemetry(3, 10_000)
         assertTrue(detector.onTelemetry(3, 13_000))
     }
+
+    @Test
+    fun `motors running while the counter advances`() {
+        detector.onTelemetry(1, 0)
+        assertFalse(detector.motorsRunning(0))
+        detector.onTelemetry(2, 1000)
+        assertFalse(detector.motorsRunning(1500))
+        detector.onTelemetry(3, 2000)
+        assertTrue(detector.motorsRunning(2500))
+        assertFalse(detector.motorsRunning(5000))
+        detector.reset()
+        detector.onTelemetry(4, 6000)
+        assertFalse(detector.motorsRunning(6100))
+    }
 }

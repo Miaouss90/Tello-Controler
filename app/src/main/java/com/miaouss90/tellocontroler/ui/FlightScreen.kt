@@ -15,6 +15,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.miaouss90.tellocontroler.FlightViewModel
 import com.miaouss90.tellocontroler.controller.RcInput
 import com.miaouss90.tellocontroler.flight.FlightState
+import com.miaouss90.tellocontroler.flight.FlightStateMachine
 import com.miaouss90.tellocontroler.tello.LinkLevel
 import com.miaouss90.tellocontroler.tello.LinkQuality
 import com.miaouss90.tellocontroler.tello.TelloConnectionState
@@ -176,6 +178,12 @@ fun FlightScreen(vm: FlightViewModel) {
                         if (flightState == FlightState.TAKING_OFF) "TAKING OFF…" else "A  TAKE OFF",
                         fontWeight = FontWeight.Bold,
                     )
+                }
+                // Escape hatch: state says airborne but the drone is at ground level (e.g. caught by hand).
+                if (flightState != FlightState.LANDED && connected &&
+                    telemetry.heightCm < FlightStateMachine.AIRBORNE_HEIGHT_CM
+                ) {
+                    TextButton(onClick = { vm.markLanded() }) { Text("MARK LANDED") }
                 }
                 // SAFETY: LAND stays enabled whenever a command link may exist; it is never guarded.
                 OutlinedButton(enabled = connection != TelloConnectionState.DISCONNECTED, onClick = { vm.land() }) {

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -19,6 +20,8 @@ class MainActivity : ComponentActivity(), InputManager.InputDeviceListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // A sleeping screen pauses the app, which neutralizes the sticks mid-flight.
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         inputManager = getSystemService(Context.INPUT_SERVICE) as InputManager
         inputManager.registerInputDeviceListener(this, null)
         refreshControllerState()

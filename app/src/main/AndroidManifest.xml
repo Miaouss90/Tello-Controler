@@ -6,6 +6,8 @@
     <!-- Explicit Internet-less Tello Wi-Fi request (TelloWifiManager). Normal permissions, no prompt. -->
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <!-- Wi-Fi low-latency lock while linked to the Tello (normal permission). -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <!-- In-app updates from GitHub Releases (the user grants it once in system settings). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <application

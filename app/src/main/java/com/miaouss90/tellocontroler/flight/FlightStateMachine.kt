@@ -12,6 +12,12 @@ sealed interface FlightEvent {
 
     /** Motor-on time stopped advancing: the aircraft is on the ground whatever the reason (auto-land, lost ack). */
     data object MotorsStopped : FlightEvent
+
+    /** Motor-on time is advancing: motors spin even though we did not command a takeoff. */
+    data object MotorsRunning : FlightEvent
+
+    /** Pilot confirms the aircraft is on the ground (escape hatch when no signal can tell). */
+    data object ManualLanded : FlightEvent
 }
 
 /**
@@ -35,10 +41,11 @@ object FlightStateMachine {
             event.ok -> FlightState.LANDED
             else -> FlightState.FLYING
         }
-        FlightEvent.EmergencySent, FlightEvent.MotorsStopped -> FlightState.LANDED
+        FlightEvent.EmergencySent, FlightEvent.MotorsStopped, FlightEvent.ManualLanded -> FlightState.LANDED
+        FlightEvent.MotorsRunning -> if (state == FlightState.LANDED) FlightState.FLYING else state
         is FlightEvent.Height -> when {
-            event.cm >= AIRBORNE_HEIGHT_CM && (state == FlightState.LANDED || state == FlightState.TAKING_OFF) ->
-                FlightState.FLYING
+            // Height alone never promotes LANDED: lifting the drone by hand changes it too.
+            event.cm >= AIRBORNE_HEIGHT_CM && state == FlightState.TAKING_OFF -> FlightState.FLYING
             event.cm <= 0 && state == FlightState.LANDING -> FlightState.LANDED
             else -> state
         }

@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.net.wifi.WifiManager
 import android.net.wifi.WifiNetworkSpecifier
 import android.os.Build
 import android.os.PatternMatcher
@@ -29,6 +30,13 @@ class TelloWifiManager(context: Context) {
     }
 
     private val connectivity = context.getSystemService(ConnectivityManager::class.java)
+
+    // Keeps the radio out of power save while linked: fewer dropped video datagrams, lower latency.
+    @Suppress("DEPRECATION")
+    private val wifiLock = context.applicationContext.getSystemService(WifiManager::class.java)?.createWifiLock(
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) WifiManager.WIFI_MODE_FULL_LOW_LATENCY else WifiManager.WIFI_MODE_FULL_HIGH_PERF,
+        "tello-controler",
+    )?.apply { setReferenceCounted(false) }
     private var callback: ConnectivityManager.NetworkCallback? = null
 
     private val _state = MutableStateFlow(TelloWifiState.IDLE)
@@ -57,12 +65,14 @@ class TelloWifiManager(context: Context) {
         }
         val cb = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
+                runCatching { wifiLock?.acquire() }
                 _network.value = network
                 _state.value = TelloWifiState.LOCKED
             }
 
             override fun onLost(network: Network) {
                 if (_network.value == network) {
+                    runCatching { wifiLock?.release() }
                     _network.value = null
                     _state.value = TelloWifiState.LOST
                 }
@@ -85,6 +95,7 @@ class TelloWifiManager(context: Context) {
     fun release() {
         callback?.let { runCatching { connectivity.unregisterNetworkCallback(it) } }
         callback = null
+        runCatching { wifiLock?.release() }
         _network.value = null
         _state.value = TelloWifiState.IDLE
     }
