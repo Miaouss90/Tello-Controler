@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Low-latency AVC decoder for the Tello H.264 elementary stream.
  * UDP chunks are accumulated and split into NAL units on Annex-B start codes.
  *
- * HARDWARE-UNVERIFIED: framing and latency must be validated on a real Tello.
+ * Framing validated on a real Tello EDU (2026-09-27). HARDWARE-UNVERIFIED: latency not measured.
  */
 class TelloH264Decoder(private val surface: Surface) {
     companion object {
