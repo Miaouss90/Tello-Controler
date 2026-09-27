@@ -8,9 +8,11 @@
 - [x] Xbox event mapping skeleton
 - [x] UDP video receiver
 - [x] GitHub Actions APK artifact
+- [x] Unit tests in CI (mapping, safety loop, parsers)
+- [x] Package structure + AGENTS.md for AI-assisted development
 - [ ] CI build passes and APK installs on the target Android phone
 - [ ] Command acknowledgement/state machine
-- [ ] Fixed-rate RC loop + stale-input watchdog
+- [x] Fixed-rate RC loop + stale-input watchdog
 - [ ] H.264 MediaCodec decoder and full-screen Surface
 - [ ] Polished dark FPV interface and coherent visual system
 - [ ] First-launch/connect experience suitable for phone testing
@@ -19,14 +21,17 @@
 ## V0.2 — Safe manual flight & settings
 - [x] Settings screen
 - [x] In-app "Check for updates" action
-- [ ] Compare installed version with latest GitHub Release
+- [x] Compare installed version with latest GitHub Release
 - [x] Open the latest GitHub Release from the app for APK installation
 - [x] Display current installed version
-- [ ] Native GitHub API version comparison and latest available version
+- [x] Native GitHub API version comparison and latest available version
+- [x] One-tap in-app download & install (PackageInstaller)
+- [x] Automatic versioning + GitHub Release on every `main` build (signed with a stable key)
 - [x] Controller connect/disconnect status
-- [ ] Configurable dead-zone
+- [x] Rescaled dead-zone (configurable value still pending)
 - [ ] Slow / Normal / Sport rates
 - [x] App lifecycle failsafe
+- [x] Guarded emergency stop (hold Menu 1 s)
 - [ ] Battery takeoff warning/guard
 - [x] Video RX diagnostics / packet indicator
 - [ ] Connection quality and last-packet indicators
@@ -51,5 +56,4 @@
 - [ ] Object detection/tracking
 - [ ] Assisted visual flight
 - [ ] Optional simulator
-- [ ] Signed releases / internal distribution
 - [ ] Multiple Tello EDU research

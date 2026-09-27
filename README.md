@@ -1,3 +1,5 @@
+<img src="docs/assets/app-icon-source.png" width="96" align="right" alt="App icon">
+
 # Tello-Controler 🚁🎮
 
 Native Android ground-control application for the **DJI/Ryze Tello EDU**, focused on low-latency manual flight, live video and Xbox controller support.
@@ -40,20 +42,19 @@ The Tello SDK endpoint is `192.168.10.1:8889`; state is received on UDP `8890` a
 | Right stick Y | Pitch |
 | A | Takeoff |
 | B | Land |
-| Menu | Emergency (guarded / long-press planned) |
+| Menu (hold 1 s) | Emergency motor stop — release early to cancel |
 
-RC values are normalized to the Tello `rc a b c d` range. A configurable dead-zone and speed profiles are part of the roadmap.
+RC values are normalized to the Tello `rc a b c d` range with a rescaled 8 % dead-zone. Axis directions are **not yet verified on hardware**. A configurable dead-zone and speed profiles are part of the roadmap.
 
-## Build & install
+## Build, release & update
 
-The repository is designed so **Android Studio is not required to obtain an APK**. GitHub Actions runs the Gradle build and publishes the debug APK as a workflow artifact.
+Everything is automated by GitHub Actions — **Android Studio is not required**.
 
-1. Open **Actions → Android CI**.
-2. Run the workflow, or push to `main`.
-3. Download the `Tello-Controler-debug` artifact.
-4. Install the APK on Android (allow installation from the browser/file manager when prompted).
+- **Every push / pull request** runs the unit tests and builds a signed APK (workflow artifact).
+- **Every push to `main`** publishes a GitHub Release `v0.3.<build>` with the APK.
+- **On the phone:** Settings → **UPDATE** downloads the latest release and installs it (phone on a Wi-Fi with Internet, not the Tello Wi-Fi). Android asks once to allow the app to install updates.
 
-A signed release pipeline is planned after hardware validation.
+**First install:** open the [latest release](https://github.com/Miaouss90/Tello-Controler/releases/latest) on the phone, download the APK and open it. Builds up to v0.2.0 were signed with a throw-away debug key: uninstall that version once before installing v0.3+.
 
 ## Documentation
 
@@ -62,6 +63,7 @@ A signed release pipeline is planned after hardware validation.
 - [Safety](docs/SAFETY.md)
 - [Roadmap](ROADMAP.md)
 - [Contributing](CONTRIBUTING.md)
+- [AI agent guide](AGENTS.md)
 
 ## Development principles
 

@@ -1,19 +1,35 @@
 package com.miaouss90.tellocontroler.tello
 
+/** Parsed Tello state packet (UDP 8890), e.g. `pitch:0;roll:0;yaw:0;...;bat:87;...`. */
 data class TelloTelemetry(
-    val pitch: Int = 0, val roll: Int = 0, val yaw: Int = 0,
-    val heightCm: Int = 0, val batteryPercent: Int = 0,
-    val flightTimeSeconds: Int = 0, val tofCm: Int = 0,
-    val temperatureC: Double = 0.0
+    val pitch: Int = 0,
+    val roll: Int = 0,
+    val yaw: Int = 0,
+    val heightCm: Int = 0,
+    val batteryPercent: Int = 0,
+    val flightTimeSeconds: Int = 0,
+    val tofCm: Int = 0,
+    val temperatureC: Double = 0.0,
 ) {
     companion object {
         fun parse(raw: String): TelloTelemetry {
-            val v = raw.trim().split(";").mapNotNull {
-                val p=it.split(":",limit=2); if(p.size==2) p[0] to p[1] else null
+            val values = raw.trim().split(";").mapNotNull {
+                val pair = it.split(":", limit = 2)
+                if (pair.size == 2) pair[0].trim() to pair[1].trim() else null
             }.toMap()
-            fun i(k:String)=v[k]?.toIntOrNull() ?: 0
-            return TelloTelemetry(i("pitch"),i("roll"),i("yaw"),i("h"),i("bat"),i("time"),i("tof"),
-                listOf(i("templ"),i("temph")).average())
+
+            fun int(key: String) = values[key]?.toIntOrNull() ?: 0
+
+            return TelloTelemetry(
+                pitch = int("pitch"),
+                roll = int("roll"),
+                yaw = int("yaw"),
+                heightCm = int("h"),
+                batteryPercent = int("bat"),
+                flightTimeSeconds = int("time"),
+                tofCm = int("tof"),
+                temperatureC = listOf(int("templ"), int("temph")).average(),
+            )
         }
     }
 }
