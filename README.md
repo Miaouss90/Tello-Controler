@@ -120,7 +120,7 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 Everything is automated by GitHub Actions — **Android Studio is not required**.
 
 - **Every push / pull request** runs the unit tests and builds a signed APK (workflow artifact).
-- **Every push to `main`** publishes a GitHub Release `v0.4.<build>` with the APK.
+- **Every push to `main`** publishes a GitHub Release `v0.5.0`, `v0.5.1`… with the APK.
 - **On the phone:** Settings → **UPDATE** downloads the latest release and installs it (phone on a Wi-Fi with Internet, not the Tello Wi-Fi). Android asks once to allow the app to install updates.
 
 **First install:** open the [latest release](https://github.com/Miaouss90/Tello-Controler/releases/latest) on the phone, download the APK and open it. Builds up to v0.2.0 were signed with a throw-away debug key: uninstall that version once before installing v0.3 or later.

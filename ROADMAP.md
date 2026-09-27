@@ -1,6 +1,6 @@
 # Roadmap
 
-Milestones are **named**, not version numbers: the app version (`0.4.<build>`) only drives in-app updates.
+Milestones are **named**, not version numbers: the app version (`0.5.x`) only drives in-app updates.
 Each item has two statuses — nothing counts as done for flight until it is validated on a real Tello EDU.
 The step-by-step checks live in [README › Hardware checklist](README.md#hardware-checklist).
 

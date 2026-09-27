@@ -75,9 +75,10 @@ gradle assembleRelease     # APK → app/build/outputs/apk/release/app-release.a
 
 ## Release pipeline (fully automatic)
 - Every push/PR to `main`: unit tests + release APK uploaded as a workflow artifact.
-- Every push to `main` (= every merged PR): GitHub Release `v<telloVersionBase>.<run_number>` with the APK,
+- Every push to `main` (= every merged PR): GitHub Release `v<telloVersionBase>.<n>` with the APK,
   marked latest. **Merging to `main` ships to the owner's phone** — keep `main` flyable.
-- Version: `versionCode = GITHUB_RUN_NUMBER`, `versionName = telloVersionBase.run_number`
+- Version: `versionCode = GITHUB_RUN_NUMBER` (drives Android updates), `versionName = telloVersionBase.n` where n =
+  number of `v<base>.*` tags already published (0.5.0, 0.5.1…)
   (`gradle.properties`). Never hardcode versions; bump `telloVersionBase` for a new minor line.
 - In-app: Settings → UPDATE queries `releases/latest`, downloads the `.apk` asset and installs it with
   PackageInstaller. Needs the one-time "install unknown apps" permission.

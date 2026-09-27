@@ -29,7 +29,7 @@
 **Why:** `emergency` cuts the motors and the drone falls; a single accidental press must not trigger it.
 
 ## ADR-008 — Continuous delivery with in-app self-update
-**Decision:** every push to `main` publishes a GitHub Release (`v<base>.<run_number>`) with an APK signed by one stable release key stored in repository secrets; the app installs updates itself through the PackageInstaller session API.
+**Decision:** every push to `main` publishes a GitHub Release (`v<base>.<n>`, n = releases already in that line; `versionCode` = run number) with an APK signed by one stable release key stored in repository secrets; the app installs updates itself through the PackageInstaller session API.
 **Why:** the owner wants zero manual steps between a merge and the phone. A stable key is mandatory because Android rejects updates signed by a different key. Updates are disabled while connected to the Tello because installing restarts the app.
 
 ## ADR-009 — Held-stick input pump (amends ADR-005)

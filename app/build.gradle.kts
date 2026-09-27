@@ -4,8 +4,9 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-// Versioning is automatic: CI sets GITHUB_RUN_NUMBER, giving versionCode N and versionName <base>.N.
-// Bump `telloVersionBase` in gradle.properties for a new minor/major line.
+// Versioning is automatic. versionCode = GITHUB_RUN_NUMBER (always increasing, drives Android updates).
+// versionName = TELLO_VERSION_NAME from CI: <telloVersionBase>.<releases already published in that line>,
+// i.e. 0.5.0, 0.5.1… Bump `telloVersionBase` in gradle.properties for a new minor/major line.
 val versionBase = providers.gradleProperty("telloVersionBase").get()
 val ciBuildNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()
 
@@ -20,7 +21,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = ciBuildNumber ?: 1
-        versionName = if (ciBuildNumber != null) "$versionBase.$ciBuildNumber" else "$versionBase.0-dev"
+        versionName = System.getenv("TELLO_VERSION_NAME") ?: "$versionBase.0-dev"
     }
     signingConfigs {
         if (releaseKeystore != null) {
