@@ -126,4 +126,5 @@ Changes touching these areas must include/adjust unit tests and mention the safe
 - [ ] `ROADMAP.md` "Code" column and relevant `docs/` updated; architectural choices recorded in `docs/DECISIONS.md`.
 - [ ] Hardware-dependent assumptions are marked `HARDWARE-UNVERIFIED`.
 - [ ] New hardware checks added (unticked) to README › Hardware checklist; ticked only on the owner's report.
+- [ ] User-visible changes added to `CHANGELOG.md` under the current version line.
 - [ ] User-visible behavior changes are reflected in README (controls table) and the Settings dialog text.

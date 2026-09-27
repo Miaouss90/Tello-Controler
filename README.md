@@ -131,6 +131,7 @@ Everything is automated by GitHub Actions — **Android Studio is not required**
 - [Architecture](docs/ARCHITECTURE.md)
 - [Safety](docs/SAFETY.md)
 - [Roadmap](ROADMAP.md)
+- [Changelog](CHANGELOG.md)
 - [Contributing](CONTRIBUTING.md)
 - [AI agent guide](AGENTS.md)
 
