@@ -29,6 +29,8 @@ Hardware validation status: [README › Hardware checklist](README.md#hardware-c
 - Versions are sequential within a line (`0.5.0`, `0.5.1`…) instead of the CI run number.
 
 ### Fixed
+- `rc` commands sent in order and evenly spaced (they could bunch up or be reordered).
+- With a controller connected, touch sticks are greyed; dragging one is an explicit takeover (notice).
 - **Video pixel artifacts**: dedicated decode thread, no silently dropped data, clean resync on key frames,
   frame end detected on the short last datagram, larger socket buffer, Wi-Fi low-latency lock.
 - **TAKE OFF never came back** after lifting the drone by hand: height alone no longer means "flying".

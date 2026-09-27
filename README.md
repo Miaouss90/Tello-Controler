@@ -72,6 +72,7 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 - [ ] Y cycles Slow / Normal / Sport and the difference is felt
 - [ ] Dead-zone slider changes stick feel
 - [ ] Touch sticks appear without a controller and fly correctly
+- [ ] With the controller connected, touch sticks are greyed and do nothing until dragged; dragging one takes over (notice), releasing gives control back
 - [ ] HUD stick indicators follow the controller
 - [ ] Expo slider: finer control around the center, full deflection unchanged
 - [ ] INDOOR mode: slow, soft, climbing stops at 150 cm (HUD notice)

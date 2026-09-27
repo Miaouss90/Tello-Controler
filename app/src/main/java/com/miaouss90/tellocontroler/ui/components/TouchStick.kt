@@ -16,6 +16,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
@@ -32,7 +33,12 @@ import kotlin.math.roundToInt
  * on release it reports inactive and the aircraft input returns to neutral.
  */
 @Composable
-fun TouchStick(onChange: (x: Float, y: Float, active: Boolean) -> Unit, modifier: Modifier = Modifier) {
+fun TouchStick(
+    onChange: (x: Float, y: Float, active: Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    /** Greyed out while another input (the controller) is in charge; still usable to take over. */
+    dimmed: Boolean = false,
+) {
     val diameter = 150.dp
     val knob = 56.dp
     var position by remember { mutableStateOf(Offset.Zero) }
@@ -49,6 +55,7 @@ fun TouchStick(onChange: (x: Float, y: Float, active: Boolean) -> Unit, modifier
 
     Box(
         modifier
+            .alpha(if (dimmed && !active) 0.3f else 1f)
             .size(diameter)
             .background(HudColors.Panel, CircleShape)
             .border(1.dp, HudColors.Muted, CircleShape)
