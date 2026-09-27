@@ -101,7 +101,13 @@ class TelloClient(clock: () -> Long = System::currentTimeMillis) {
         }
     }
 
-    fun rc(input: RcInput) = send(TelloCommands.rc(input.roll, input.pitch, input.throttle, input.yaw))
+    /**
+     * Sent synchronously on the caller's thread (the RC loop): packets leave in order and evenly spaced.
+     * Launching one coroutine per packet let 20 Hz commands bunch up or overtake each other (jerky flight).
+     */
+    fun rc(input: RcInput) {
+        runCatching { sendRaw(TelloCommands.rc(input.roll, input.pitch, input.throttle, input.yaw)) }
+    }
 
     suspend fun takeoff() = request("takeoff", MOTION_ACK_TIMEOUT_MS)
 
