@@ -1,5 +1,6 @@
 package com.miaouss90.tellocontroler.ui
 
+import androidx.activity.compose.BackHandler
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
@@ -33,8 +34,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.miaouss90.tellocontroler.FlightViewModel
 import com.miaouss90.tellocontroler.settings.FlightMode
@@ -48,60 +47,52 @@ import com.miaouss90.tellocontroler.update.UpdateViewModel
 import kotlin.math.roundToInt
 
 /**
+ * Full-screen settings layer drawn inside the flight screen (not a Dialog window: a dialog is offset by its
+ * own window insets in landscape, and it steals gamepad focus — sticks went neutral and B could not land).
+ *
  * @param updateAllowed false while linked to the Tello: installing restarts the app and would drop control.
  */
 @Composable
-fun SettingsButton(
-    updateAllowed: Boolean,
-    settings: FlightSettings,
-    onSettingsChange: (FlightSettings) -> Unit,
-) {
-    var open by remember { mutableStateOf(false) }
-    TextButton(onClick = { open = true }) { Text("SETTINGS") }
-    if (open) SettingsDialog(updateAllowed, settings, onSettingsChange, onDismiss = { open = false })
-}
-
-@Composable
-private fun SettingsDialog(
+fun SettingsScreen(
     updateAllowed: Boolean,
     settings: FlightSettings,
     onSettingsChange: (FlightSettings) -> Unit,
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val updates: UpdateViewModel = viewModel()
-    // Full screen, two columns: a small AlertDialog is far too short in landscape.
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(Modifier.fillMaxSize(), color = HudColors.Night, contentColor = Color.White) {
-            Column(Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 8.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Settings", Modifier.weight(1f), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text("v${updates.installedVersion}", color = HudColors.Muted, fontSize = 12.sp)
-                    TextButton(onClick = onDismiss) { Text("CLOSE") }
+    BackHandler(onBack = onDismiss)
+    // Surface consumes touches, so nothing behind it can be pressed by accident.
+    Surface(modifier.fillMaxSize(), color = HudColors.Night, contentColor = Color.White) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 8.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Settings", Modifier.weight(1f), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text("v${updates.installedVersion}", color = HudColors.Muted, fontSize = 12.sp)
+                TextButton(onClick = onDismiss) { Text("CLOSE") }
+            }
+            Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
+                SettingsColumn(Modifier.weight(1f)) {
+                    FlightSettingsSection(settings, onSettingsChange)
+                    SectionTitle("Tello EDU")
+                    ToggleRow("Mission Pad detection (downward camera, shows pad id and position)", settings.missionPads) {
+                        onSettingsChange(settings.copy(missionPads = it))
+                    }
+                    SectionTitle("Recording")
+                    ToggleRow("Flight log (CSV per flight, saved in Download/TelloControler)", settings.flightLogs) {
+                        onSettingsChange(settings.copy(flightLogs = it))
+                    }
                 }
-                Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                    SettingsColumn(Modifier.weight(1f)) {
-                        FlightSettingsSection(settings, onSettingsChange)
-                        SectionTitle("Tello EDU")
-                        ToggleRow("Mission Pad detection (downward camera, shows pad id and position)", settings.missionPads) {
-                            onSettingsChange(settings.copy(missionPads = it))
-                        }
-                        SectionTitle("Recording")
-                        ToggleRow("Flight log (CSV per flight, saved in Download/TelloControler)", settings.flightLogs) {
-                            onSettingsChange(settings.copy(flightLogs = it))
-                        }
-                    }
-                    SettingsColumn(Modifier.weight(1f)) {
-                        HudSettingsSection(settings, onSettingsChange)
-                        SectionTitle("Controls")
-                        Text("Left stick: yaw / throttle · Right stick: roll / pitch", fontSize = 13.sp)
-                        Text(
-                            "A take off · B land · Y rate · X photo · View record · " +
-                                "hold Menu ${FlightViewModel.EMERGENCY_HOLD_MS / 1000} s = EMERGENCY motor stop",
-                            fontSize = 13.sp,
-                        )
-                        SectionTitle("Update")
-                        UpdateSection(updates, updateAllowed)
-                    }
+                SettingsColumn(Modifier.weight(1f)) {
+                    HudSettingsSection(settings, onSettingsChange)
+                    SectionTitle("Controls")
+                    Text("Left stick: yaw / throttle · Right stick: roll / pitch", fontSize = 13.sp)
+                    Text(
+                        "A take off · B land · Y rate · X photo · View record · " +
+                            "hold Menu ${FlightViewModel.EMERGENCY_HOLD_MS / 1000} s = EMERGENCY motor stop",
+                        fontSize = 13.sp,
+                    )
+                    SectionTitle("Update")
+                    UpdateSection(updates, updateAllowed)
                 }
             }
         }

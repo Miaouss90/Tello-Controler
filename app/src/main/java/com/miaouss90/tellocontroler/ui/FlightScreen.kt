@@ -79,6 +79,7 @@ fun FlightScreen(vm: FlightViewModel) {
     val flightTime = flightStartedAt?.let { HudMath.flightTime(now - it) } ?: "--:--"
     val recordingSince by vm.recordingSince.collectAsState()
     var surfaceView by remember { mutableStateOf<SurfaceView?>(null) }
+    var settingsOpen by remember { mutableStateOf(false) }
     LaunchedEffect(vm) {
         vm.photoRequests.collect { PhotoCapture.capture(surfaceView) { vm.onPhotoCaptured(it) } }
     }
@@ -161,11 +162,7 @@ fun FlightScreen(vm: FlightViewModel) {
                 Modifier.align(Alignment.BottomEnd).padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                SettingsButton(
-                    updateAllowed = connection == TelloConnectionState.DISCONNECTED || connection == TelloConnectionState.ERROR,
-                    settings = settings,
-                    onSettingsChange = { vm.updateSettings(it) },
-                )
+                TextButton(onClick = { settingsOpen = true }) { Text("SETTINGS") }
                 if (!connected && connection != TelloConnectionState.CONNECTING) {
                     Button(onClick = { vm.connect() }) {
                         Text(if (connection == TelloConnectionState.LINK_LOST) "RECONNECT" else "CONNECT")
@@ -220,6 +217,15 @@ fun FlightScreen(vm: FlightViewModel) {
                 }
                 if (emergencyArming) Banner("HOLD MENU — EMERGENCY MOTOR STOP", HudColors.Red)
                 notice?.let { Banner(it, HudColors.Panel) }
+            }
+
+            if (settingsOpen) {
+                SettingsScreen(
+                    updateAllowed = connection == TelloConnectionState.DISCONNECTED || connection == TelloConnectionState.ERROR,
+                    settings = settings,
+                    onSettingsChange = { vm.updateSettings(it) },
+                    onDismiss = { settingsOpen = false },
+                )
             }
         }
     }
