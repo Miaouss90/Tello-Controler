@@ -36,9 +36,13 @@ class TelloWifiManager(context: Context) {
     private val _network = MutableStateFlow<Network?>(null)
     val network: StateFlow<Network?> = _network.asStateFlow()
 
-    /** Idempotent: keeps an existing request alive; Android re-delivers the network after a drop. */
+    /**
+     * Idempotent while searching or locked. After a loss the old request is dead (Android does not re-deliver
+     * a specifier network), so it is replaced by a fresh one.
+     */
     fun request() {
-        if (callback != null && _state.value != TelloWifiState.UNAVAILABLE) return
+        val state = _state.value
+        if (callback != null && (state == TelloWifiState.SEARCHING || state == TelloWifiState.LOCKED)) return
         release()
         val builder = NetworkRequest.Builder()
             .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
