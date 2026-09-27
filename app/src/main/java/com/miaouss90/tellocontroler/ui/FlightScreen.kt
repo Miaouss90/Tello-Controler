@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,15 +24,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.miaouss90.tellocontroler.FlightViewModel
+import com.miaouss90.tellocontroler.controller.RcInput
 import com.miaouss90.tellocontroler.flight.FlightState
 import com.miaouss90.tellocontroler.tello.LinkLevel
 import com.miaouss90.tellocontroler.tello.LinkQuality
 import com.miaouss90.tellocontroler.tello.TelloConnectionState
+import com.miaouss90.tellocontroler.tello.TelloH264Decoder
 import com.miaouss90.tellocontroler.tello.TelloTelemetry
 import com.miaouss90.tellocontroler.tello.TelloWifiState
 import com.miaouss90.tellocontroler.ui.components.Banner
 import com.miaouss90.tellocontroler.ui.components.Metric
 import com.miaouss90.tellocontroler.ui.components.StatusPill
+import com.miaouss90.tellocontroler.ui.components.StickIndicator
 import com.miaouss90.tellocontroler.ui.components.TouchStick
 import com.miaouss90.tellocontroler.ui.components.color
 import com.miaouss90.tellocontroler.ui.theme.HudColors
@@ -50,18 +55,25 @@ fun FlightScreen(vm: FlightViewModel) {
     val takeoffBlock by vm.takeoffBlock.collectAsState()
     val settings by vm.settings.collectAsState()
     val notice by vm.notice.collectAsState()
+    val rcOutput by vm.rcOutput.collectAsState()
     val connected = connection == TelloConnectionState.CONNECTED
     val videoActive = videoLink.level == LinkLevel.GOOD || videoLink.level == LinkLevel.DEGRADED
+    // Fallback: without a controller the touch sticks appear by themselves.
+    val showTouchSticks = settings.touchSticks || !controllerConnected
 
     TelloTheme {
         Box(Modifier.fillMaxSize().background(HudColors.Night)) {
+            // Keep the Tello 4:3 aspect ratio: letterbox on wide phones instead of stretching.
             VideoSurface(
                 onSurfaceReady = { vm.startVideo(it) },
                 onSurfaceDestroyed = { vm.stopVideo() },
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxHeight()
+                    .aspectRatio(TelloH264Decoder.WIDTH.toFloat() / TelloH264Decoder.HEIGHT, matchHeightConstraintsFirst = true),
             )
 
-            if (!videoActive) {
+            if (!videoActive && !connected) {
                 SetupChecklist(
                     wifiState = wifiState,
                     connection = connection,
@@ -75,14 +87,23 @@ fun FlightScreen(vm: FlightViewModel) {
 
             TopBar(wifiState, connection, stateLink, videoLink, controllerConnected, telemetry, settings.minTakeoffBatteryPercent)
 
-            if (settings.touchSticks) {
+            if (!videoActive && connected) {
+                Text(
+                    "WAITING FOR VIDEO…",
+                    Modifier.align(Alignment.Center),
+                    color = HudColors.Muted,
+                    fontSize = 12.sp,
+                )
+            }
+
+            if (showTouchSticks) {
                 TouchStick(
                     onChange = { x, y, active -> vm.touchLeft(x, y, active) },
-                    modifier = Modifier.align(Alignment.CenterStart).padding(start = 24.dp, top = 40.dp),
+                    modifier = Modifier.align(Alignment.CenterStart).padding(start = 24.dp),
                 )
                 TouchStick(
                     onChange = { x, y, active -> vm.touchRight(x, y, active) },
-                    modifier = Modifier.align(Alignment.CenterEnd).padding(end = 24.dp, top = 40.dp),
+                    modifier = Modifier.align(Alignment.CenterEnd).padding(end = 24.dp),
                 )
             }
 
@@ -93,6 +114,7 @@ fun FlightScreen(vm: FlightViewModel) {
                 stateLink = stateLink,
                 videoLink = videoLink,
                 lastResponse = lastResponse,
+                rcOutput = rcOutput.takeUnless { showTouchSticks },
                 modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
             )
 
@@ -201,10 +223,23 @@ private fun FlightData(
     stateLink: LinkQuality,
     videoLink: LinkQuality,
     lastResponse: String,
+    rcOutput: RcInput?,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("$flightState  •  RATE $rate", color = HudColors.Cyan, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        // Mode 2: left = yaw (x) / throttle (y), right = roll (x) / pitch (y); what is actually sent.
+        if (rcOutput != null) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StickIndicator("YAW / THR", x = rcOutput.yaw, y = rcOutput.throttle)
+                StickIndicator("ROLL / PITCH", x = rcOutput.roll, y = rcOutput.pitch)
+            }
+        }
+        Text(
+            "$flightState  •  RATE $rate  •  MOTOR ${telemetry.flightTimeSeconds} s",
+            color = HudColors.Cyan,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+        )
         Text(
             "YAW ${telemetry.yaw}°   •   PITCH ${telemetry.pitch}°   •   ROLL ${telemetry.roll}°",
             color = Color.White,

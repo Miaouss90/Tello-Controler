@@ -1,9 +1,15 @@
 package com.miaouss90.tellocontroler.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -58,5 +64,29 @@ fun Banner(text: String, color: Color, modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold,
             fontSize = 13.sp,
         )
+    }
+}
+
+/** Live position of one RC stick pair (-100..100, y up = positive), as sent to the aircraft. */
+@Composable
+fun StickIndicator(label: String, x: Int, y: Int) {
+    val box = 52.dp
+    val dot = 10.dp
+    Surface(color = HudColors.Panel, shape = RoundedCornerShape(10.dp)) {
+        Column(Modifier.padding(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.size(box).border(1.dp, HudColors.Muted, RoundedCornerShape(6.dp))) {
+                Box(Modifier.align(Alignment.Center).size(width = box, height = 1.dp).background(HudColors.Muted.copy(alpha = 0.4f)))
+                Box(Modifier.align(Alignment.Center).size(width = 1.dp, height = box).background(HudColors.Muted.copy(alpha = 0.4f)))
+                val travel = (box - dot) / 2
+                Box(
+                    Modifier
+                        .align(Alignment.Center)
+                        .offset(x = travel * (x / 100f), y = travel * (-y / 100f))
+                        .size(dot)
+                        .background(if (x != 0 || y != 0) HudColors.Cyan else HudColors.Muted, CircleShape),
+                )
+            }
+            Text(label, color = HudColors.Muted, fontSize = 7.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }

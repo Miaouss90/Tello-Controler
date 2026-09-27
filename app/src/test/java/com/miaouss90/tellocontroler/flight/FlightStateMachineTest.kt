@@ -47,4 +47,9 @@ class FlightStateMachineTest {
     fun `failed land keeps flying`() {
         assertEquals(FLYING, run(FLYING, FlightEvent.LandSent, FlightEvent.LandDone(ok = false)))
     }
+
+    @Test
+    fun `motors stopped always ends landed`() {
+        FlightState.entries.forEach { assertEquals(LANDED, run(it, FlightEvent.MotorsStopped)) }
+    }
 }
