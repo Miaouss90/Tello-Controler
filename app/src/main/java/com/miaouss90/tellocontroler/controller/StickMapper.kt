@@ -22,12 +22,16 @@ object StickMapper {
         rightX: Float,
         rightY: Float,
         deadZone: Float = DEFAULT_DEAD_ZONE,
+        scale: Float = 1f,
     ) = RcInput(
-        roll = toRc(shape(rightX, deadZone)),
-        pitch = toRc(-shape(rightY, deadZone)),
-        throttle = toRc(-shape(leftY, deadZone)),
-        yaw = toRc(shape(leftX, deadZone)),
+        roll = toRc(shape(rightX, deadZone) * scale),
+        pitch = toRc(-shape(rightY, deadZone) * scale),
+        throttle = toRc(-shape(leftY, deadZone) * scale),
+        yaw = toRc(shape(leftX, deadZone) * scale),
     )
+
+    fun map(axes: StickAxes, deadZone: Float = DEFAULT_DEAD_ZONE, scale: Float = 1f) =
+        map(axes.leftX, axes.leftY, axes.rightX, axes.rightY, deadZone, scale)
 
     /** Dead-zone with rescaling, so output ramps smoothly from 0 instead of jumping to the dead-zone value. */
     fun shape(value: Float, deadZone: Float): Float {

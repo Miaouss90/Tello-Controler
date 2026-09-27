@@ -27,4 +27,9 @@ class AppVersionTest {
         assertFalse(AppVersion.isNewer("v1.0", "1.0.0"))
         assertTrue(AppVersion.isNewer("v1.0.1", "1.0"))
     }
+
+    @Test
+    fun `uppercase V prefix is accepted`() {
+        assertTrue(AppVersion.isNewer("V0.4.1", "0.4.0"))
+    }
 }

@@ -27,13 +27,13 @@ class MainActivity : ComponentActivity(), InputManager.InputDeviceListener {
 
     override fun onResume() {
         super.onResume()
+        vm.setForeground(true)
         refreshControllerState()
     }
 
-    // SAFETY: never keep flying on stale sticks while the app is not in the foreground.
+    // SAFETY: never keep flying on held sticks while the app is not in the foreground.
     override fun onPause() {
-        vm.neutralControls()
-        vm.emergencyReleased()
+        vm.setForeground(false)
         super.onPause()
     }
 
@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity(), InputManager.InputDeviceListener {
     }
 
     override fun onGenericMotionEvent(e: MotionEvent): Boolean {
-        XboxController.motion(e)?.let {
+        XboxController.axes(e)?.let {
             vm.controllerInput(it)
             return true
         }
@@ -64,6 +64,7 @@ class MainActivity : ComponentActivity(), InputManager.InputDeviceListener {
             XboxController.isEmergencyButton(keyCode) -> vm.emergencyPressed()
             XboxController.isTakeoff(event) -> vm.takeoff()
             XboxController.isLand(event) -> vm.land()
+            XboxController.isRateCycle(event) -> vm.cycleRate()
             else -> return super.onKeyDown(keyCode, event)
         }
         return true

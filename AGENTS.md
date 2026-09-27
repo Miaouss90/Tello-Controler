@@ -15,13 +15,19 @@ and understandable from its commit message and docs.
 app/src/main/java/com/miaouss90/tellocontroler/
 ├── MainActivity.kt          Android glue only: lifecycle + input events → FlightViewModel
 ├── FlightViewModel.kt       Orchestration & UI state (StateFlow). No Android UI references.
+├── flight/                  PURE flight logic                                    [unit-tested]
+│   ├── FlightStateMachine.kt landed/taking off/flying/landing reducer
+│   └── TakeoffGuard.kt      pre-takeoff checks (landing is never guarded)
+├── settings/                FlightSettings (rates, dead-zone, battery min, touch) + SharedPreferences repo
 ├── controller/              Input → RC command
+│   ├── StickAxes.kt         raw stick positions
 │   ├── RcInput.kt           rc a b c d value object (-100..100)
 │   ├── StickMapper.kt       PURE axis → RcInput (dead-zone, Mode 2 layout)      [unit-tested]
 │   ├── XboxController.kt    Android MotionEvent/KeyEvent adapter → StickMapper
 │   └── RcSafetyLoop.kt      SAFETY-CRITICAL fixed-rate sender + stale watchdog  [unit-tested]
 ├── tello/                   Aircraft protocol (see docs/PROTOCOL.md)
-│   ├── TelloClient.kt       UDP 8889 commands / 8890 state, connection state
+│   ├── TelloClient.kt       UDP 8889 commands+acks / 8890 state, connection state, link watchdog
+│   ├── LinkMonitor.kt       PURE packet freshness / rate tracker                 [unit-tested]
 │   ├── TelloCommands.kt     PURE command string builders                         [unit-tested]
 │   ├── TelloTelemetry.kt    PURE state packet parser                             [unit-tested]
 │   ├── TelloVideoReceiver.kt UDP 11111 transport
@@ -37,7 +43,8 @@ app/src/main/java/com/miaouss90/tellocontroler/
 └── ui/
     ├── FlightScreen.kt      Landscape HUD composition
     ├── VideoSurface.kt      SurfaceView host for the decoder
-    ├── SettingsDialog.kt
+    ├── SettingsDialog.kt    flight settings + update
+    ├── SetupChecklist.kt    guided pre-flight setup
     ├── components/          Reusable HUD widgets
     └── theme/               Colors (HudColors) + TelloTheme
 app/src/test/…               JVM unit tests (JUnit 4), mirror the main package layout
@@ -75,14 +82,18 @@ gradle assembleRelease     # APK → app/build/outputs/apk/release/app-release.a
 ## Safety rules (must never regress)
 1. **Only `RcSafetyLoop` sends `rc` commands.** Never call `TelloClient.rc` from UI or input handlers.
 2. Input older than `RcSafetyLoop.STALE_MS` ⇒ neutral RC. Do not raise this limit without an ADR.
+   Held controller sticks are re-fed by the ViewModel input pump only while the controller is present and the
+   app is in the foreground; touch sticks re-report while touched (ADR-005).
 3. App pause, controller disconnect and ViewModel clear ⇒ `neutralControls()` (and cancel emergency arming).
 4. `takeoff`/`land` fire on the **first** key press only (`repeatCount == 0`), never on repeat.
-5. `emergency` (motor cut, the drone falls) requires holding Menu ≥ `FlightViewModel.EMERGENCY_HOLD_MS`.
+5. **Landing is never blocked**: no guard, no flight-state check, and `land` preempts pending acknowledgements.
+   Takeoff always goes through `TakeoffGuard`.
+6. `emergency` (motor cut, the drone falls) requires holding Menu ≥ `FlightViewModel.EMERGENCY_HOLD_MS`.
    Never map it to a single tap or an on-screen button without a guard.
-6. `CONNECTED` means the Tello acknowledged `command` with `ok` — never assume it.
-7. In-app update is disabled while connected to the Tello (installing kills the app mid-flight).
-8. Anything not verified on a real Tello is marked `HARDWARE-UNVERIFIED` in code/docs. Don't remove the mark
-   unless the owner reports a successful hardware test.
+7. `CONNECTED` means the Tello acknowledged `command` with `ok` — never assume it.
+8. In-app update is disabled while connected to the Tello (installing kills the app mid-flight).
+9. Anything not verified on a real Tello is marked `HARDWARE-UNVERIFIED` in code/docs. Don't remove the mark
+   (or tick the ROADMAP "Hardware" column) unless the owner reports a successful hardware test.
 
 Changes touching these areas must include/adjust unit tests and mention the safety impact in the commit body.
 
@@ -99,6 +110,6 @@ Changes touching these areas must include/adjust unit tests and mention the safe
 ## Definition of done
 - [ ] `testDebugUnitTest` and `assembleDebug` pass (CI green).
 - [ ] New pure logic has unit tests.
-- [ ] `ROADMAP.md` checkboxes and relevant `docs/` updated; architectural choices recorded in `docs/DECISIONS.md`.
+- [ ] `ROADMAP.md` "Code" column and relevant `docs/` updated; architectural choices recorded in `docs/DECISIONS.md`.
 - [ ] Hardware-dependent assumptions are marked `HARDWARE-UNVERIFIED`.
 - [ ] User-visible behavior changes are reflected in README (controls table) and the Settings dialog text.

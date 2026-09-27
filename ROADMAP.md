@@ -1,59 +1,68 @@
 # Roadmap
 
-## V0.1 — Installable phone release
-- [x] Native Kotlin/Compose project
-- [x] Landscape HUD skeleton
-- [x] UDP command transport
-- [x] Telemetry parser
-- [x] Xbox event mapping skeleton
-- [x] UDP video receiver
-- [x] GitHub Actions APK artifact
-- [x] Unit tests in CI (mapping, safety loop, parsers)
-- [x] Package structure + AGENTS.md for AI-assisted development
-- [ ] CI build passes and APK installs on the target Android phone
-- [ ] Command acknowledgement/state machine
-- [x] Fixed-rate RC loop + stale-input watchdog
-- [ ] H.264 MediaCodec decoder and full-screen Surface
-- [ ] Polished dark FPV interface and coherent visual system
-- [ ] First-launch/connect experience suitable for phone testing
-- [ ] Real Tello EDU bench test
+Milestones are **named**, not version numbers: the app version (`0.4.<build>`) only drives in-app updates.
+Each item has two statuses — nothing counts as done for flight until it is validated on a real Tello EDU.
 
-## V0.2 — Safe manual flight & settings
-- [x] Settings screen
-- [x] In-app "Check for updates" action
-- [x] Compare installed version with latest GitHub Release
-- [x] Open the latest GitHub Release from the app for APK installation
-- [x] Display current installed version
-- [x] Native GitHub API version comparison and latest available version
-- [x] One-tap in-app download & install (PackageInstaller)
-- [x] Automatic versioning + GitHub Release on every `main` build (signed with a stable key)
-- [x] Controller connect/disconnect status
-- [x] Rescaled dead-zone (configurable value still pending)
-- [ ] Slow / Normal / Sport rates
-- [x] App lifecycle failsafe
-- [x] Guarded emergency stop (hold Menu 1 s)
-- [ ] Battery takeoff warning/guard
-- [x] Video RX diagnostics / packet indicator
-- [ ] Connection quality and last-packet indicators
-- [ ] Touch-control fallback
+**Legend:** ✅ done · ⬜ to do · — not applicable
 
-## V0.3 — FPV experience
-- [ ] Full-screen low-latency video
-- [ ] Photo capture
-- [ ] Local video recording
-- [ ] Better HUD
-- [ ] Controller remapping
-- [ ] Settings persistence
+## M1 — First safe flight
+Everything `docs/SAFETY.md` requires before flying, plus the bench test that validates it.
 
-## V0.4 — EDU features
-- [ ] Mission Pad telemetry/control
-- [ ] Automated moves/missions
-- [ ] Mission editor
-- [ ] Flight logs
+| Item | Code | Hardware |
+|---|---|---|
+| Native Kotlin/Compose app, landscape HUD, adaptive icon | ✅ | — |
+| UDP command transport, `command` acknowledgement | ✅ | ⬜ |
+| Command acknowledgements (`takeoff`/`land`), `land` preempts pending acks | ✅ | ⬜ |
+| Flight state machine (landed / taking off / flying / landing) from acks + height | ✅ | ⬜ |
+| Telemetry parser | ✅ | ⬜ |
+| Link watchdog: LINK_LOST after 2 s without state, auto-recover, reconnect | ✅ | ⬜ |
+| Connection quality + last-packet indicators (state & video) | ✅ | ⬜ |
+| Xbox Mode 2 mapping, rescaled dead-zone | ✅ | ⬜ axis directions |
+| Held-stick input pump (a steady stick is not treated as stale) | ✅ | ⬜ |
+| Fixed-rate RC loop + stale-input watchdog | ✅ | ⬜ |
+| Zero RC on controller disconnect / app pause | ✅ | ⬜ |
+| Guarded emergency stop (hold Menu 1 s) | ✅ | ⬜ |
+| Takeoff guard: connection, fresh telemetry, battery minimum, landed | ✅ | ⬜ |
+| Flight-state-aware UI (takeoff disabled when airborne, land never blocked) | ✅ | ⬜ |
+| Guided pre-flight setup checklist (Wi-Fi, controller, SDK link, video) | ✅ | ⬜ |
+| H.264 decoder to full-screen Surface | ✅ | ⬜ latency |
+| **Bench test on a real Tello EDU (props off, then tethered hover)** | — | ⬜ |
+
+## M2 — Comfortable manual flight
+| Item | Code | Hardware |
+|---|---|---|
+| Slow / Normal / Sport rates (Y cycles, persisted) | ✅ | ⬜ |
+| Configurable dead-zone | ✅ | ⬜ |
+| Settings persistence | ✅ | — |
+| Touch-stick fallback | ✅ | ⬜ |
+| Controller remapping | ⬜ | ⬜ |
+| Auto-land detection (low-battery landing reflected in flight state) | ⬜ | ⬜ |
+
+## M3 — FPV experience
+| Item | Code | Hardware |
+|---|---|---|
+| Low-latency video tuning | ⬜ | ⬜ |
+| Photo capture | ⬜ | ⬜ |
+| Local video recording | ⬜ | ⬜ |
+| HUD polish (artificial horizon, flight timer) | ⬜ | — |
+
+## M4 — EDU features
+| Item | Code | Hardware |
+|---|---|---|
+| Mission Pad telemetry/control | ⬜ | ⬜ |
+| Automated moves/missions + editor | ⬜ | ⬜ |
+| Flight logs | ⬜ | — |
+
+## Delivery (done)
+| Item | Status |
+|---|---|
+| CI: unit tests + signed APK on every push/PR | ✅ |
+| Automatic GitHub Release on every `main` build | ✅ |
+| One-tap in-app update (disabled while linked to the Tello) | ✅ |
+| AGENTS.md, package structure, ADRs | ✅ |
 
 ## Future / research
-- [ ] QR / ArUco recognition
-- [ ] Object detection/tracking
-- [ ] Assisted visual flight
-- [ ] Optional simulator
-- [ ] Multiple Tello EDU research
+- QR / ArUco recognition
+- Object detection/tracking, assisted visual flight
+- Optional simulator
+- Multiple Tello EDU

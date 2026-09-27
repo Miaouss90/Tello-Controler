@@ -31,3 +31,15 @@
 ## ADR-008 — Continuous delivery with in-app self-update
 **Decision:** every push to `main` publishes a GitHub Release (`v<base>.<run_number>`) with an APK signed by one stable release key stored in repository secrets; the app installs updates itself through the PackageInstaller session API.
 **Why:** the owner wants zero manual steps between a merge and the phone. A stable key is mandatory because Android rejects updates signed by a different key. Updates are disabled while connected to the Tello because installing restarts the app.
+
+## ADR-009 — Held-stick input pump (amends ADR-005)
+**Decision:** Android only reports joystick *changes*, so the ViewModel holds the last controller axes and re-feeds `RcSafetyLoop` every period while the controller is connected and the app is in the foreground. Touch sticks re-report while touched. The stale watchdog still neutralizes any source that stops feeding.
+**Why:** with change-only events, a stick held steady (e.g. full throttle) was neutralized after 250 ms. Safety now relies on explicit signals — device removal, app pause, touch release — plus the watchdog as backstop.
+
+## ADR-010 — Acknowledged commands, flight state and link watchdog
+**Decision:** acknowledged commands are serialized on one response channel; `emergency`/`rc` never wait and `land` preempts. A pure reducer derives flight state from acks and telemetry height. Telemetry silence > 2 s ⇒ LINK_LOST.
+**Why:** takeoff guards and flight-state-aware UI need a trustworthy state; a dropped Wi-Fi must be visible instead of showing CONNECTED forever.
+
+## ADR-011 — Named milestones, versions only for delivery
+**Decision:** ROADMAP uses named milestones (M1 First safe flight, …) with separate Code/Hardware status; `telloVersionBase` is bumped for significant releases but does not encode milestones.
+**Why:** version names must only increase for in-app updates, while milestone progress depends on hardware validation.
