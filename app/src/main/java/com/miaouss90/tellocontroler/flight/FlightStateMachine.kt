@@ -16,7 +16,8 @@ sealed interface FlightEvent {
 
 /**
  * Pure flight-state reducer driven by command acknowledgements and telemetry height.
- * HARDWARE-UNVERIFIED: ack timing and height thresholds must be confirmed on a real Tello.
+ * Nominal takeoff/land transitions validated on a real Tello EDU (2026-09-27).
+ * HARDWARE-UNVERIFIED: timeout/error paths and the airborne height threshold.
  */
 object FlightStateMachine {
     const val AIRBORNE_HEIGHT_CM = 20

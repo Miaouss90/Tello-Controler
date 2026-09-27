@@ -20,7 +20,8 @@ enum class TelloWifiState { IDLE, SEARCHING, LOCKED, LOST, UNAVAILABLE }
  * Android 8–9: the Wi-Fi the user joined manually. Sockets are bound per socket, never process-wide, so the
  * rest of the app (in-app update) keeps Internet over mobile data.
  *
- * HARDWARE-UNVERIFIED: dialog persistence and primary Wi-Fi behaviour vary by phone vendor.
+ * Wi-Fi lock validated on the owner's phone (2026-09-27).
+ * HARDWARE-UNVERIFIED: loss/auto-reconnection path; dialog persistence varies by phone vendor.
  */
 class TelloWifiManager(context: Context) {
     companion object {
