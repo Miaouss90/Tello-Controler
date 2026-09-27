@@ -3,12 +3,11 @@ package com.miaouss90.tellocontroler.tello
 import android.media.MediaCodec
 import android.media.MediaFormat
 import android.view.Surface
-import java.io.ByteArrayOutputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Low-latency AVC decoder for the Tello H.264 elementary stream.
- * UDP chunks are accumulated and split into NAL units on Annex-B start codes.
+ * NAL units come from [NalSplitter], shared with the video recorder.
  *
  * Framing validated on a real Tello EDU (2026-09-27). HARDWARE-UNVERIFIED: latency not measured.
  */
@@ -21,7 +20,6 @@ class TelloH264Decoder(private val surface: Surface) {
 
     private var codec: MediaCodec? = null
     private val running = AtomicBoolean(false)
-    private val buffer = ByteArrayOutputStream()
     private var pts = 0L
 
     fun start() {
@@ -34,17 +32,11 @@ class TelloH264Decoder(private val surface: Surface) {
         }
     }
 
+    /** Feeds one start-code-prefixed NAL unit (see [NalSplitter]). */
     @Synchronized
-    fun offer(chunk: ByteArray) {
+    fun offerNal(nal: ByteArray) {
         if (!running.get()) return
-        buffer.write(chunk)
-        val data = buffer.toByteArray()
-        val starts = AnnexB.findStartCodes(data)
-        if (starts.size < 2) return
-        for (i in 0 until starts.size - 1) queue(data.copyOfRange(starts[i], starts[i + 1]))
-        val tail = data.copyOfRange(starts.last(), data.size)
-        buffer.reset()
-        buffer.write(tail)
+        queue(nal)
         drain()
     }
 
@@ -54,7 +46,6 @@ class TelloH264Decoder(private val surface: Surface) {
         runCatching { codec?.stop() }
         runCatching { codec?.release() }
         codec = null
-        buffer.reset()
     }
 
     private fun queue(nal: ByteArray) {

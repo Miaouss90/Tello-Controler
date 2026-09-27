@@ -1,5 +1,6 @@
 package com.miaouss90.tellocontroler.ui
 
+import android.view.SurfaceView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,7 +17,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,6 +75,11 @@ fun FlightScreen(vm: FlightViewModel) {
         }
     }
     val flightTime = flightStartedAt?.let { HudMath.flightTime(now - it) } ?: "--:--"
+    val recordingSince by vm.recordingSince.collectAsState()
+    var surfaceView by remember { mutableStateOf<SurfaceView?>(null) }
+    LaunchedEffect(vm) {
+        vm.photoRequests.collect { PhotoCapture.capture(surfaceView) { vm.onPhotoCaptured(it) } }
+    }
     val connected = connection == TelloConnectionState.CONNECTED
     val videoActive = videoLink.level == LinkLevel.GOOD || videoLink.level == LinkLevel.DEGRADED
     // Fallback: without a controller the touch sticks appear by themselves.
@@ -81,6 +91,7 @@ fun FlightScreen(vm: FlightViewModel) {
             VideoSurface(
                 onSurfaceReady = { vm.startVideo(it) },
                 onSurfaceDestroyed = { vm.stopVideo() },
+                onViewCreated = { surfaceView = it },
                 modifier = Modifier
                     .align(Alignment.Center)
                     .fillMaxHeight()
@@ -169,6 +180,21 @@ fun FlightScreen(vm: FlightViewModel) {
                 // SAFETY: LAND stays enabled whenever a command link may exist; it is never guarded.
                 OutlinedButton(enabled = connection != TelloConnectionState.DISCONNECTED, onClick = { vm.land() }) {
                     Text(if (flightState == FlightState.LANDING) "LANDING…" else "B  LAND")
+                }
+            }
+
+            Row(
+                Modifier.align(Alignment.TopEnd).padding(top = 64.dp, end = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                OutlinedButton(enabled = videoActive, onClick = { vm.requestPhoto() }) { Text("X  PHOTO") }
+                val recording = recordingSince
+                OutlinedButton(onClick = { vm.toggleRecording() }) {
+                    Text(
+                        if (recording != null) "■ REC ${HudMath.flightTime(now - recording)}" else "●  REC",
+                        color = if (recording != null) HudColors.Red else Color.Unspecified,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
             }
 

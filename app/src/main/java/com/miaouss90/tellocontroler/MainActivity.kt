@@ -65,6 +65,8 @@ class MainActivity : ComponentActivity(), InputManager.InputDeviceListener {
             XboxController.isTakeoff(event) -> vm.takeoff()
             XboxController.isLand(event) -> vm.land()
             XboxController.isRateCycle(event) -> vm.cycleRate()
+            XboxController.isPhoto(event) -> vm.requestPhoto()
+            XboxController.isRecordToggle(event) -> vm.toggleRecording()
             else -> return super.onKeyDown(keyCode, event)
         }
         return true

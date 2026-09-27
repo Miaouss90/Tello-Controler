@@ -21,6 +21,10 @@ object XboxController {
     fun isTakeoff(e: KeyEvent) = isFirstPress(e, KeyEvent.KEYCODE_BUTTON_A)
     fun isLand(e: KeyEvent) = isFirstPress(e, KeyEvent.KEYCODE_BUTTON_B)
     fun isRateCycle(e: KeyEvent) = isFirstPress(e, KeyEvent.KEYCODE_BUTTON_Y)
+    fun isPhoto(e: KeyEvent) = isFirstPress(e, KeyEvent.KEYCODE_BUTTON_X)
+
+    /** Xbox "View" button. */
+    fun isRecordToggle(e: KeyEvent) = isFirstPress(e, KeyEvent.KEYCODE_BUTTON_SELECT)
 
     /** Menu / Start button; emergency requires holding it (see FlightViewModel). */
     fun isEmergencyButton(keyCode: Int) = keyCode == KeyEvent.KEYCODE_BUTTON_START
