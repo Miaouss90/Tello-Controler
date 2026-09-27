@@ -57,14 +57,8 @@ No Gradle wrapper and no local SDK are assumed. CI (`.github/workflows/android.y
 gradle testDebugUnitTest   # JVM unit tests
 gradle assembleRelease     # APK → app/build/outputs/apk/release/app-release.apk
 ```
-Local build without installing the SDK (Docker):
-```bash
-docker run --rm -v "$PWD":/w -w /w ghcr.io/cirruslabs/android-sdk:35 bash -c \
-  'curl -sSLo /tmp/g.zip https://services.gradle.org/distributions/gradle-8.9-bin.zip && unzip -q /tmp/g.zip -d /opt &&
-   /opt/gradle-8.9/bin/gradle --no-daemon testDebugUnitTest assembleDebug'
-```
-Note: AGP's `aapt2` is x86_64-only on Linux, so a full local build fails on ARM64 hosts (the owner's WSL is
-aarch64). There, only pure-Kotlin logic can be checked locally; rely on CI for `assembleDebug`.
+**CI is the judge.** Don't spend time building locally: push the branch and read the CI result
+(`gh run watch`, `gh run view --log-failed`). The owner's machine is ARM64 WSL, where AGP's x86_64 `aapt2` can't run anyway.
 
 ## Release pipeline (fully automatic)
 - Every push/PR to `main`: unit tests + release APK uploaded as a workflow artifact.
