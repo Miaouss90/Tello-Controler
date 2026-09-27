@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,7 +39,12 @@ import com.miaouss90.tellocontroler.ui.components.StatusPill
 import com.miaouss90.tellocontroler.ui.components.StickIndicator
 import com.miaouss90.tellocontroler.ui.components.TouchStick
 import com.miaouss90.tellocontroler.ui.components.color
+import com.miaouss90.tellocontroler.ui.hud.ArtificialHorizon
+import com.miaouss90.tellocontroler.ui.hud.HeadingTape
+import com.miaouss90.tellocontroler.ui.hud.HudMath
+import com.miaouss90.tellocontroler.ui.hud.Reticle
 import com.miaouss90.tellocontroler.ui.theme.HudColors
+import kotlinx.coroutines.delay
 import com.miaouss90.tellocontroler.ui.theme.TelloTheme
 
 @Composable
@@ -56,6 +62,14 @@ fun FlightScreen(vm: FlightViewModel) {
     val settings by vm.settings.collectAsState()
     val notice by vm.notice.collectAsState()
     val rcOutput by vm.rcOutput.collectAsState()
+    val flightStartedAt by vm.flightStartedAt.collectAsState()
+    val now by produceState(System.currentTimeMillis()) {
+        while (true) {
+            value = System.currentTimeMillis()
+            delay(1000)
+        }
+    }
+    val flightTime = flightStartedAt?.let { HudMath.flightTime(now - it) } ?: "--:--"
     val connected = connection == TelloConnectionState.CONNECTED
     val videoActive = videoLink.level == LinkLevel.GOOD || videoLink.level == LinkLevel.DEGRADED
     // Fallback: without a controller the touch sticks appear by themselves.
@@ -73,6 +87,16 @@ fun FlightScreen(vm: FlightViewModel) {
                     .aspectRatio(TelloH264Decoder.WIDTH.toFloat() / TelloH264Decoder.HEIGHT, matchHeightConstraintsFirst = true),
             )
 
+            if (connected) {
+                if (settings.hudHorizon) {
+                    ArtificialHorizon(telemetry.pitch, telemetry.roll, Modifier.fillMaxSize())
+                }
+                if (settings.hudReticle) Reticle(Modifier.align(Alignment.Center))
+                if (settings.hudHeading) {
+                    HeadingTape(telemetry.yaw, Modifier.align(Alignment.TopCenter).padding(top = 60.dp))
+                }
+            }
+
             if (!videoActive && !connected) {
                 SetupChecklist(
                     wifiState = wifiState,
@@ -85,7 +109,7 @@ fun FlightScreen(vm: FlightViewModel) {
                 )
             }
 
-            TopBar(wifiState, connection, stateLink, videoLink, controllerConnected, telemetry, settings.minTakeoffBatteryPercent)
+            TopBar(wifiState, connection, stateLink, videoLink, controllerConnected, telemetry, settings.minTakeoffBatteryPercent, flightTime)
 
             if (!videoActive && connected) {
                 Text(
@@ -149,7 +173,7 @@ fun FlightScreen(vm: FlightViewModel) {
             }
 
             Column(
-                Modifier.align(Alignment.TopCenter).padding(top = 70.dp),
+                Modifier.align(Alignment.TopCenter).padding(top = 116.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -174,6 +198,7 @@ private fun TopBar(
     controllerConnected: Boolean,
     telemetry: TelloTelemetry,
     minBattery: Int,
+    flightTime: String,
 ) {
     val tello = when (connection) {
         TelloConnectionState.CONNECTED, TelloConnectionState.LINK_LOST -> stateLink.level.color()
@@ -210,7 +235,9 @@ private fun TopBar(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Metric("BAT", "$battery%", batteryColor)
             Metric("ALT", "${telemetry.heightCm} cm")
-            Metric("TOF", "${telemetry.tofCm} cm")
+            Metric("SPD", "${HudMath.oneDecimal(HudMath.horizontalSpeedMs(telemetry.speedX, telemetry.speedY))} m/s")
+            Metric("V/S", "${HudMath.oneDecimal(HudMath.verticalSpeedMs(telemetry.speedZ))} m/s")
+            Metric("TIME", flightTime)
         }
     }
 }
@@ -241,7 +268,7 @@ private fun FlightData(
             fontWeight = FontWeight.Bold,
         )
         Text(
-            "YAW ${telemetry.yaw}°   •   PITCH ${telemetry.pitch}°   •   ROLL ${telemetry.roll}°",
+            "YAW ${telemetry.yaw}°   •   PITCH ${telemetry.pitch}°   •   ROLL ${telemetry.roll}°   •   TOF ${telemetry.tofCm} cm",
             color = Color.White,
             fontSize = 12.sp,
         )

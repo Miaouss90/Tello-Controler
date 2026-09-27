@@ -108,6 +108,11 @@ private fun FlightSettingsSection(settings: FlightSettings, onChange: (FlightSet
             valueRange = FlightSettings.MIN_BATTERY_RANGE.first.toFloat()..FlightSettings.MIN_BATTERY_RANGE.last.toFloat(),
         )
 
+        Text("HUD", fontWeight = FontWeight.Bold)
+        ToggleRow("Artificial horizon", settings.hudHorizon) { onChange(settings.copy(hudHorizon = it)) }
+        ToggleRow("Heading tape", settings.hudHeading) { onChange(settings.copy(hudHeading = it)) }
+        ToggleRow("Central reticle", settings.hudReticle) { onChange(settings.copy(hudReticle = it)) }
+
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "Always show touch sticks (they appear automatically when no controller is connected)",
@@ -116,6 +121,14 @@ private fun FlightSettingsSection(settings: FlightSettings, onChange: (FlightSet
             )
             Switch(checked = settings.touchSticks, onCheckedChange = { onChange(settings.copy(touchSticks = it)) })
         }
+    }
+}
+
+@Composable
+private fun ToggleRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(label, Modifier.weight(1f))
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 
