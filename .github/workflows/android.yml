@@ -65,7 +65,7 @@ jobs:
       - name: Name APK
         run: cp app/build/outputs/apk/release/app-release.apk "Tello-Controler-v${{ steps.version.outputs.version }}.apk"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: Tello-Controler-v${{ steps.version.outputs.version }}
           path: Tello-Controler-v${{ steps.version.outputs.version }}.apk
