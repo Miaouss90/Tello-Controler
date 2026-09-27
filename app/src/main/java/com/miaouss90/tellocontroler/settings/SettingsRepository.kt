@@ -16,6 +16,7 @@ class SettingsRepository(context: Context) {
         const val KEY_HUD_HORIZON = "hud_horizon"
         const val KEY_HUD_HEADING = "hud_heading"
         const val KEY_HUD_RETICLE = "hud_reticle"
+        const val KEY_RUMBLE_ALERTS = "rumble_alerts"
     }
 
     private val prefs = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
@@ -33,6 +34,7 @@ class SettingsRepository(context: Context) {
             .putBoolean(KEY_HUD_HORIZON, next.hudHorizon)
             .putBoolean(KEY_HUD_HEADING, next.hudHeading)
             .putBoolean(KEY_HUD_RETICLE, next.hudReticle)
+            .putBoolean(KEY_RUMBLE_ALERTS, next.rumbleAlerts)
             .apply()
     }
 
@@ -46,6 +48,7 @@ class SettingsRepository(context: Context) {
             hudHorizon = prefs.getBoolean(KEY_HUD_HORIZON, defaults.hudHorizon),
             hudHeading = prefs.getBoolean(KEY_HUD_HEADING, defaults.hudHeading),
             hudReticle = prefs.getBoolean(KEY_HUD_RETICLE, defaults.hudReticle),
+            rumbleAlerts = prefs.getBoolean(KEY_RUMBLE_ALERTS, defaults.rumbleAlerts),
         ).sanitized()
     }
 }

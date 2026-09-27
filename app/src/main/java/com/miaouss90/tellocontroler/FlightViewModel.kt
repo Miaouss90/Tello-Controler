@@ -5,6 +5,10 @@ import android.net.Network
 import android.view.Surface
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.miaouss90.tellocontroler.controller.AlertInputs
+import com.miaouss90.tellocontroler.controller.AlertMonitor
+import com.miaouss90.tellocontroler.controller.ControllerRumble
+import com.miaouss90.tellocontroler.controller.FlightAlert
 import com.miaouss90.tellocontroler.controller.RcInput
 import com.miaouss90.tellocontroler.controller.RcSafetyLoop
 import com.miaouss90.tellocontroler.controller.StickAxes
@@ -115,6 +119,21 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
     init {
         viewModelScope.launch { telemetry.collect { reduce(FlightEvent.Height(it.heightCm)) } }
         viewModelScope.launch { wifi.network.collect { onTelloNetwork(it) } }
+        viewModelScope.launch {
+            var previous: AlertInputs? = null
+            combine(connection, wifi.state, telemetry, flightState, emergencyArming) { c, w, t, f, arming ->
+                AlertInputs(
+                    linkLost = c == TelloConnectionState.LINK_LOST || w == TelloWifiState.LOST,
+                    airborne = f != FlightState.LANDED,
+                    batteryPercent = t.batteryPercent,
+                    lowBatteryPercent = settings.value.minTakeoffBatteryPercent,
+                    emergencyArming = arming,
+                )
+            }.collect { current ->
+                AlertMonitor.alerts(previous, current).forEach { onAlert(it) }
+                previous = current
+            }
+        }
         viewModelScope.launch {
             wifi.state.collect {
                 when (it) {
@@ -311,6 +330,15 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
      * Polled, not driven by telemetry emissions: StateFlow drops identical packets, and a landed Tello sends
      * identical packets, so an emission-driven check would never see the counter stay frozen.
      */
+    private fun onAlert(alert: FlightAlert) {
+        if (settings.value.rumbleAlerts) ControllerRumble.play(alert)
+        when (alert) {
+            FlightAlert.BATTERY_LOW -> showNotice("Battery low: ${telemetry.value.batteryPercent}% — land soon")
+            FlightAlert.BATTERY_CRITICAL -> showNotice("Battery critical: ${telemetry.value.batteryPercent}% — LAND NOW")
+            FlightAlert.LINK_LOST, FlightAlert.EMERGENCY_ARMING -> Unit
+        }
+    }
+
     private fun checkMotorsStopped() {
         if (stateLink.value.level != LinkLevel.GOOD) return
         if (motorStopDetector.onTelemetry(telemetry.value.flightTimeSeconds, System.currentTimeMillis())) {

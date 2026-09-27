@@ -20,6 +20,7 @@ data class FlightSettings(
     val hudHorizon: Boolean = true,
     val hudHeading: Boolean = true,
     val hudReticle: Boolean = true,
+    val rumbleAlerts: Boolean = true,
 ) {
     companion object {
         val DEAD_ZONE_RANGE = 0.02f..0.25f
