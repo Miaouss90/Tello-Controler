@@ -17,13 +17,17 @@ app/src/main/java/com/miaouss90/tellocontroler/
 ├── FlightViewModel.kt       Orchestration & UI state (StateFlow). No Android UI references.
 ├── flight/                  PURE flight logic                                    [unit-tested]
 │   ├── FlightStateMachine.kt landed/taking off/flying/landing reducer
+│   ├── MotorStopDetector.kt motor-time counter → motors stopped / running
 │   └── TakeoffGuard.kt      pre-takeoff checks (landing is never guarded)
-├── settings/                FlightSettings (rates, dead-zone, battery min, touch) + SharedPreferences repo
+├── settings/                FlightSettings + SharedPreferences repo
+│   └── FlightMode.kt        PURE Standard/Indoor/Cinematic → FlightProfile      [unit-tested]
 ├── controller/              Input → RC command
 │   ├── StickAxes.kt         raw stick positions
 │   ├── RcInput.kt           rc a b c d value object (-100..100)
-│   ├── StickMapper.kt       PURE axis → RcInput (dead-zone, Mode 2 layout)      [unit-tested]
+│   ├── StickMapper.kt       PURE axis → RcInput (dead-zone, expo, scale, Mode 2) [unit-tested]
 │   ├── XboxController.kt    Android MotionEvent/KeyEvent adapter → StickMapper
+│   ├── AlertMonitor.kt      PURE edge-triggered flight alerts                    [unit-tested]
+│   ├── ControllerRumble.kt  gamepad vibration per alert
 │   ├── RcShaper.kt          PURE height limit + smoothing inside the RC loop    [unit-tested]
 │   └── RcSafetyLoop.kt      SAFETY-CRITICAL fixed-rate sender + stale watchdog  [unit-tested]
 ├── tello/                   Aircraft protocol (see docs/PROTOCOL.md)
@@ -32,9 +36,11 @@ app/src/main/java/com/miaouss90/tellocontroler/
 │   ├── TelloWifiManager.kt  explicit Internet-less TELLO-* Wi-Fi (WifiNetworkSpecifier), lost/locked state
 │   ├── TelloCommands.kt     PURE command string builders                         [unit-tested]
 │   ├── TelloTelemetry.kt    PURE state packet parser                             [unit-tested]
-│   ├── TelloVideoReceiver.kt UDP 11111 transport
-│   ├── AnnexB.kt            PURE H.264 start-code scanner                        [unit-tested]
-│   └── TelloH264Decoder.kt  MediaCodec → Surface
+│   ├── MissionPad.kt        Mission Pad telemetry (mid, x/y/z)
+│   ├── TelloVideoReceiver.kt UDP 11111 transport (short datagram = end of frame)
+│   ├── NalSplitter.kt       PURE UDP chunks → NAL units                          [unit-tested]
+│   ├── AnnexB.kt            PURE H.264 start codes / NAL types                   [unit-tested]
+│   └── TelloH264Decoder.kt  dedicated decode thread, whole frames → MediaCodec → Surface
 ├── record/                  Photo, MP4 recording, flight recorder
 │   ├── AccessUnitAssembler.kt PURE NAL stream → SPS/PPS config + whole frames      [unit-tested]
 │   ├── FlightLog.kt         PURE CSV format + per-flight FlightRecorder            [unit-tested]
@@ -43,6 +49,7 @@ app/src/main/java/com/miaouss90/tellocontroler/
 ├── vision/                  On-device vision
 │   ├── GrayFrame.kt         PURE luminance image
 │   ├── TemplateTracker.kt   PURE NCC template tracker                              [unit-tested]
+│   ├── FollowController.kt  PURE FOLLOW yaw/throttle + InputArbiter (pilot wins)  [unit-tested]
 │   └── VisionFrameGrabber.kt PixelCopy of the video at 240×180 on a vision thread
 ├── update/                  In-app update from GitHub Releases
 │   ├── AppVersion.kt        PURE version comparison                              [unit-tested]
@@ -54,8 +61,11 @@ app/src/main/java/com/miaouss90/tellocontroler/
 └── ui/
     ├── FlightScreen.kt      Landscape HUD composition
     ├── VideoSurface.kt      SurfaceView host for the decoder
-    ├── SettingsDialog.kt    flight settings + update
+    ├── SettingsScreen.kt    full-screen settings LAYER (not a Dialog: see pitfalls)
     ├── SetupChecklist.kt    guided pre-flight setup
+    ├── TargetLayer.kt       tap-to-track over the 4:3 video, tracked box
+    ├── PhotoCapture.kt      PixelCopy photo of the video
+    ├── hud/                 PURE HudMath + cockpit overlay (horizon, heading tape, reticle)
     ├── components/          Reusable HUD widgets
     └── theme/               Colors (HudColors) + TelloTheme
 app/src/test/…               JVM unit tests (JUnit 4), mirror the main package layout
@@ -92,10 +102,13 @@ gradle assembleRelease     # APK → app/build/outputs/apk/release/app-release.a
   impossible (users must uninstall). Never regenerate it, never commit it. `main` builds fail without it.
 
 ## Safety rules (must never regress)
-1. **Only `RcSafetyLoop` sends `rc` commands.** Never call `TelloClient.rc` from UI or input handlers.
+1. **Only `RcSafetyLoop` sends `rc` commands**, synchronously from its own thread (in order, every 50 ms).
+   Never call `TelloClient.rc` from UI or input handlers, never send `rc` from per-packet coroutines.
 2. Input older than `RcSafetyLoop.STALE_MS` ⇒ neutral RC. Do not raise this limit without an ADR.
    Held controller sticks are re-fed by the ViewModel input pump only while the controller is present and the
-   app is in the foreground; touch sticks re-report while touched (ADR-005).
+   app is in the foreground; touch sticks re-report while touched (ADR-005, ADR-009).
+   Sources are arbitrated in `FlightViewModel.pumpInput` via `InputArbiter`: touch (only while dragged; greyed
+   when a controller is connected) > controller > FOLLOW (only while the pilot's sticks are centered).
 3. App pause, controller disconnect and ViewModel clear ⇒ `neutralControls()` (and cancel emergency arming).
 4. `takeoff`/`land` fire on the **first** key press only (`repeatCount == 0`), never on repeat.
 5. **Landing is never blocked**: no guard, no flight-state check, and `land` preempts pending acknowledgements.
@@ -110,7 +123,8 @@ gradle assembleRelease     # APK → app/build/outputs/apk/release/app-release.a
 10. Assisted/automatic features (flight modes, missions, replay, vision tracking) feed `RcSafetyLoop` like any
     input source: stick input or LAND overrides them instantly, they stop on link loss, and they respect the
     M2 speed/height limits.
-11. Anything not verified on a real Tello is marked `HARDWARE-UNVERIFIED` in code/docs. Don't remove the mark
+11. Stateful shaping (Cinematic smoothing) never delays a stop: stale input and explicit neutral bypass `RcShaper`.
+12. Anything not verified on a real Tello is marked `HARDWARE-UNVERIFIED` in code/docs. Don't remove the mark
    (or tick the ROADMAP "Hardware" column) unless the owner reports a successful hardware test.
 
 Changes touching these areas must include/adjust unit tests and mention the safety impact in the commit body.
@@ -125,8 +139,44 @@ Changes touching these areas must include/adjust unit tests and mention the safe
 - No new dependency without a reason in the PR description. No backend, analytics or network calls
   other than the Tello and the GitHub Releases API.
 
+## Working with the owner (process agreed on 2026-09-27)
+- The owner speaks French; answer in French. Code, commits, PRs and docs stay in English.
+- **One PR at a time, branched from `main`.** Never stack PRs that target `main` (it produced duplicated,
+  conflicting PRs). If work must build on an open PR, open it against that PR's branch (GitHub retargets it
+  after the merge) — CI then does not trigger on its own: run `gh workflow run "Android CI" --ref <branch>`.
+- The owner authorized merging on green CI ("surveille la CI pour pousser sur main"): `gh pr merge --merge
+  --delete-branch`, watch the `main` build, check that the release appeared (`gh release list`), delete branches.
+  Exception: anything that steers the aircraft autonomously waits for the owner's hardware validation of its
+  prerequisite (e.g. FOLLOW waited for the tracking preview).
+- Docs-only changes (`**.md`) skip CI and publish no release (`paths-ignore`).
+- A failed CI step with `ECONNRESET` / cache errors is GitHub infrastructure: `gh run rerun <id>`.
+- Hardware results arrive as short messages ("alerte wifi ok", "le suivi fonctionne"): tick exactly what was
+  reported in README › Hardware checklist and the ROADMAP Hardware column (🟡 when partial), nothing more.
+- Owner-reported bugs are fixed first, before continuing the roadmap.
+
+## Known pitfalls (learned the hard way)
+- `StateFlow` drops equal values: a landed Tello sends identical state packets, so logic that must notice
+  *time passing* (motor-stop detection) is **polled**, not driven by emissions.
+- Android reports joystick axes only on change: held sticks need the input pump, and resting stick drift is
+  then held too (check HUD indicator dots are grey at rest; raise the dead-zone if not).
+- `WifiNetworkSpecifier` networks are not re-delivered after `onLost`: re-request (Android shows its dialog).
+- A Compose `Dialog` is a separate window: offset by insets in landscape **and it steals gamepad focus**
+  (sticks went neutral, B could not land). Use full-screen layers inside the flight screen instead.
+- `MediaCodec.dequeueInputBuffer(0)` silently dropping NALs caused video artifacts: feed whole frames from a
+  dedicated thread and wait for input buffers.
+- Height alone is not "flying" (lifting the drone by hand changes it); motors running is.
+- `IntArray` has no `mapNotNull` (`asList()` first); `String.format` needs `Locale.ROOT` for HUD digits.
+
+## Status at end of session (2026-09-28, v0.5.6)
+- Shipped: M1 safety code, Wi-Fi lock + reconnect, flight modes/expo/height limit, FPV cockpit HUD, rumble,
+  photo / MP4 / flight log, Mission Pad detection, target tracking + FOLLOW.
+- Hardware-validated: see README › Hardware checklist (Wi-Fi, controller, axes, takeoff/land, video,
+  telemetry, Wi-Fi loss alert + reconnect, rumble, tracking select/follow box, hover stability).
+- Next (ROADMAP › Next up): finish M1 failsafe validation; first FOLLOW flight (check yaw/throttle signs);
+  mission editor (M6); advanced vision (orbit, gestures, person tracking).
+
 ## Definition of done
-- [ ] `testDebugUnitTest` and `assembleDebug` pass (CI green).
+- [ ] `testDebugUnitTest` and `assembleRelease` pass (CI green).
 - [ ] New pure logic has unit tests.
 - [ ] `ROADMAP.md` "Code" column and relevant `docs/` updated; architectural choices recorded in `docs/DECISIONS.md`.
 - [ ] Hardware-dependent assumptions are marked `HARDWARE-UNVERIFIED`.
