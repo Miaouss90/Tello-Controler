@@ -14,7 +14,7 @@ import kotlin.math.sign
  * Axis directions validated on a real Tello EDU (2026-09-27).
  */
 object StickMapper {
-    const val DEFAULT_DEAD_ZONE = 0.08f
+    const val DEFAULT_DEAD_ZONE = 0.15f
 
     fun map(
         leftX: Float,

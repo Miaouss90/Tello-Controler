@@ -6,6 +6,10 @@ Hardware validation status: [README › Hardware checklist](README.md#hardware-c
 
 ## 0.5 — 2026-09-27
 
+### Fixed
+- Slow drift while hovering hands-off: default stick dead-zone raised from 8 % to 15 % (a worn stick rests off-center
+  after movements and the input pump holds that offset). Saved dead-zone settings are unchanged; raise the slider if needed.
+
 ### Added
 - **FOLLOW mode** (RB / HUD): yaw and altitude corrections keep the tracked target centered; any stick input
   takes over, and follow stops on landing, link loss or a target lost for 2 s (with rumble).

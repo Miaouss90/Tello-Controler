@@ -21,7 +21,7 @@ class StickMapperTest {
 
     @Test
     fun `output ramps from zero just outside dead zone`() {
-        assertEquals(1, StickMapper.map(0.09f, 0f, 0f, 0f).yaw)
+        assertEquals(1, StickMapper.map(0.16f, 0f, 0f, 0f).yaw)
     }
 
     @Test
@@ -38,5 +38,10 @@ class StickMapperTest {
     fun `expo softens the center and keeps full deflection`() {
         assertEquals(31, StickMapper.map(StickAxes(leftX = 0.5f), deadZone = 0f, expo = 0.5f).yaw)
         assertEquals(100, StickMapper.map(StickAxes(leftX = 1f), deadZone = 0f, expo = 0.8f).yaw)
+    }
+
+    @Test
+    fun `resting stick offset up to 12 percent is neutral with the default dead zone`() {
+        assertTrue(StickMapper.map(StickAxes(0.12f, -0.12f, 0.12f, -0.12f)).isNeutral)
     }
 }

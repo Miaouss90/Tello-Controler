@@ -48,7 +48,7 @@ The Tello SDK endpoint is `192.168.10.1:8889`; state is received on UDP `8890` a
 | View | Start / stop video recording (Movies/TelloControler) |
 | Menu (hold 1 s) | Emergency motor stop — release early to cancel |
 
-RC values are normalized to the Tello `rc a b c d` range, with a configurable dead-zone (default 8 %) and rate profiles (Slow 35 %, Normal 65 %, Sport 100 %). Takeoff is refused without fresh telemetry or below the minimum battery (default 20 %). On-screen touch sticks appear automatically when no controller is connected (or always, via Settings); with a controller, the HUD shows the RC values actually sent. Axis directions were validated on a real Tello EDU; failsafes still need a hardware test (see ROADMAP).
+RC values are normalized to the Tello `rc a b c d` range, with a configurable dead-zone (default 15 %) and rate profiles (Slow 35 %, Normal 65 %, Sport 100 %). Takeoff is refused without fresh telemetry or below the minimum battery (default 20 %). On-screen touch sticks appear automatically when no controller is connected (or always, via Settings); with a controller, the HUD shows the RC values actually sent. Axis directions were validated on a real Tello EDU; failsafes still need a hardware test (see ROADMAP).
 
 ## Hardware checklist
 
