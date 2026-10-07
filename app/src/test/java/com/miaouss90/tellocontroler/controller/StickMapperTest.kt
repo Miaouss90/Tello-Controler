@@ -21,7 +21,7 @@ class StickMapperTest {
 
     @Test
     fun `output ramps from zero just outside dead zone`() {
-        assertEquals(1, StickMapper.map(0.09f, 0f, 0f, 0f).yaw)
+        assertEquals(1, StickMapper.map(0.16f, 0f, 0f, 0f).yaw)
     }
 
     @Test
