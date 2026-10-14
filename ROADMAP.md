@@ -49,7 +49,7 @@ Everything `docs/SAFETY.md` requires before flying, plus the bench test that val
 | Item | Code | Hardware |
 |---|---|---|
 | Slow / Normal / Sport rates (Y cycles, persisted) | ✅ | ⬜ |
-| Configurable dead-zone | ✅ | ⬜ |
+| Configurable dead-zone, explicit upgrade/default adoption | ✅ | ⬜ |
 | Settings persistence | ✅ | — |
 | Touch sticks (automatic without a controller) | ✅ | ⬜ |
 | HUD stick indicators (RC actually sent) | ✅ | ⬜ |

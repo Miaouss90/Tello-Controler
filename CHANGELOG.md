@@ -7,6 +7,9 @@ Hardware validation status: [README › Hardware checklist](README.md#hardware-c
 ## 0.5 — 2026-09-27
 
 ### Fixed
+- Settings no longer save an inherited stick dead-zone when another setting changes. Existing overrides
+  (including ambiguous legacy 8 %) are preserved; Settings → USE DEFAULT explicitly adopts 15 %.
+  Upgrade behavior is HARDWARE-UNVERIFIED.
 - Slow drift while hovering hands-off: default stick dead-zone raised from 8 % to 15 % (a worn stick rests off-center
   after movements and the input pump holds that offset). Saved dead-zone settings are unchanged; raise the slider if needed.
 

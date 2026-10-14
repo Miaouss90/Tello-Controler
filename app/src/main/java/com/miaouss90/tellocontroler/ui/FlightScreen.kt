@@ -255,6 +255,7 @@ fun FlightScreen(vm: FlightViewModel) {
                     updateAllowed = connection == TelloConnectionState.DISCONNECTED || connection == TelloConnectionState.ERROR,
                     settings = settings,
                     onSettingsChange = { vm.updateSettings(it) },
+                    onDefaultDeadZone = { vm.useDefaultDeadZone() },
                     onDismiss = { settingsOpen = false },
                 )
             }

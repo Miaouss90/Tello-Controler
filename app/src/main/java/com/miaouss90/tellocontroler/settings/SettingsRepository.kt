@@ -1,12 +1,14 @@
 package com.miaouss90.tellocontroler.settings
 
 import android.content.Context
+import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /** Persists [FlightSettings] in SharedPreferences. */
-class SettingsRepository(context: Context) {
+class SettingsRepository internal constructor(private val prefs: SharedPreferences) {
+    constructor(context: Context) : this(context.getSharedPreferences(FILE, Context.MODE_PRIVATE))
     private companion object {
         const val FILE = "flight_settings"
         const val KEY_RATE = "rate"
@@ -24,16 +26,15 @@ class SettingsRepository(context: Context) {
         const val KEY_MAX_HEIGHT = "max_height_cm"
     }
 
-    private val prefs = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
     private val _settings = MutableStateFlow(load())
     val settings: StateFlow<FlightSettings> = _settings.asStateFlow()
 
     fun update(transform: (FlightSettings) -> FlightSettings) {
-        val next = transform(_settings.value).sanitized()
+        val previous = _settings.value
+        val next = transform(previous).sanitized()
         _settings.value = next
-        prefs.edit()
+        val editor = prefs.edit()
             .putString(KEY_RATE, next.rate.name)
-            .putFloat(KEY_DEAD_ZONE, next.deadZone)
             .putInt(KEY_MIN_BATTERY, next.minTakeoffBatteryPercent)
             .putBoolean(KEY_TOUCH_STICKS, next.touchSticks)
             .putBoolean(KEY_HUD_HORIZON, next.hudHorizon)
@@ -45,7 +46,17 @@ class SettingsRepository(context: Context) {
             .putString(KEY_MODE, next.mode.name)
             .putFloat(KEY_EXPO, next.expo)
             .putInt(KEY_MAX_HEIGHT, next.maxHeightCm)
-            .apply()
+        // Do not turn an inherited default into a saved override on unrelated edits.
+        if (next.deadZone != previous.deadZone) {
+            editor.putFloat(KEY_DEAD_ZONE, next.deadZone)
+        }
+        editor.apply()
+    }
+
+    /** Explicit opt-in: legacy values have no provenance, including the old 8 % default. */
+    fun useDefaultDeadZone() {
+        prefs.edit().remove(KEY_DEAD_ZONE).apply()
+        _settings.value = _settings.value.copy(deadZone = FlightSettings().deadZone)
     }
 
     private fun load(): FlightSettings {

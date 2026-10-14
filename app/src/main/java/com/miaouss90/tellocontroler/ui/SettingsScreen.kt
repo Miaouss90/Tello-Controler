@@ -57,6 +57,7 @@ fun SettingsScreen(
     updateAllowed: Boolean,
     settings: FlightSettings,
     onSettingsChange: (FlightSettings) -> Unit,
+    onDefaultDeadZone: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -72,7 +73,7 @@ fun SettingsScreen(
             }
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
                 SettingsColumn(Modifier.weight(1f)) {
-                    FlightSettingsSection(settings, onSettingsChange)
+                    FlightSettingsSection(settings, onSettingsChange, onDefaultDeadZone)
                     SectionTitle("Tello EDU")
                     ToggleRow("Mission Pad detection (downward camera, shows pad id and position)", settings.missionPads) {
                         onSettingsChange(settings.copy(missionPads = it))
@@ -120,7 +121,11 @@ private fun SectionTitle(text: String) {
 }
 
 @Composable
-private fun FlightSettingsSection(settings: FlightSettings, onChange: (FlightSettings) -> Unit) {
+private fun FlightSettingsSection(
+    settings: FlightSettings,
+    onChange: (FlightSettings) -> Unit,
+    onDefaultDeadZone: () -> Unit,
+) {
     SectionTitle("Flight")
     Text("Rate")
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -169,6 +174,15 @@ private fun FlightSettingsSection(settings: FlightSettings, onChange: (FlightSet
         onValueChange = { onChange(settings.copy(deadZone = it)) },
         valueRange = FlightSettings.DEAD_ZONE_RANGE,
     )
+    Text(
+        "Saved values are kept after updates, including the old 8 % default. " +
+            "Use the recommended default if sticks drift at rest.",
+        color = HudColors.Muted,
+        fontSize = 12.sp,
+    )
+    TextButton(onClick = onDefaultDeadZone) {
+        Text("USE DEFAULT (${(FlightSettings().deadZone * 100).roundToInt()} %)")
+    }
     Text("Minimum battery for takeoff: ${settings.minTakeoffBatteryPercent} %")
     Slider(
         value = settings.minTakeoffBatteryPercent.toFloat(),

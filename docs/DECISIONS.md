@@ -47,3 +47,16 @@
 ## ADR-012 — Explicit Tello Wi-Fi network with per-socket binding
 **Decision:** CONNECT requests an Internet-less Wi-Fi network (`WifiNetworkSpecifier` on `TELLO-*` for Android 10+, the current Wi-Fi on 8–9) and binds the command, state and video sockets to that `Network`. Losing it neutralizes held input, marks LINK_LOST and blocks takeoff; the SDK reconnects automatically when Android re-delivers the network.
 **Why:** Android deprioritizes Wi-Fi without Internet and routed Tello UDP traffic to mobile data, causing chaotic links. Per-socket binding (not `bindProcessToNetwork`) keeps Internet over mobile data for in-app updates.
+
+## ADR-010 — Preserve ambiguous dead-zone preferences; explicit default adoption
+
+Legacy releases persisted every setting on any edit. A stored 8 % cannot distinguish a deliberate
+choice from the old default; silently replacing it would change a pilot's chosen response.
+Keep all saved values, and offer Settings → USE DEFAULT to remove only the dead-zone override.
+An absent key follows the current default (15 %); unrelated edits never create this key. Slider
+changes persist an override, even if the new value happens to equal today's default. No version
+marker or guessed provenance is needed. Other settings remain unchanged.
+
+Safety impact: opting in changes stick response; RC loop, stale-input neutralization and landing
+are unchanged. Repository regression tests cover persistence and neutral mapping at 12 %.
+HARDWARE-UNVERIFIED: upgrade UI and actual hands-off behavior require a real Tello EDU test.

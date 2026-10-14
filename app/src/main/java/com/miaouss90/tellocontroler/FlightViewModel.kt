@@ -361,6 +361,8 @@ class FlightViewModel(app: Application) : AndroidViewModel(app) {
 
     fun updateSettings(settings: FlightSettings) = settingsRepository.update { settings }
 
+    fun useDefaultDeadZone() = settingsRepository.useDefaultDeadZone()
+
     fun cycleRate() {
         settingsRepository.update { it.copy(rate = it.rate.next()) }
         showNotice("Rate: ${settings.value.rate.name}")

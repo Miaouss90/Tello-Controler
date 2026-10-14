@@ -50,6 +50,11 @@ The Tello SDK endpoint is `192.168.10.1:8889`; state is received on UDP `8890` a
 
 RC values are normalized to the Tello `rc a b c d` range, with a configurable dead-zone (default 15 %) and rate profiles (Slow 35 %, Normal 65 %, Sport 100 %). Takeoff is refused without fresh telemetry or below the minimum battery (default 20 %). On-screen touch sticks appear automatically when no controller is connected (or always, via Settings); with a controller, the HUD shows the RC values actually sent. Axis directions were validated on a real Tello EDU; failsafes still need a hardware test (see ROADMAP).
 
+Saved dead-zones, including legacy 8 %, are preserved after updates because their original intent is unknown.
+In Settings, **USE DEFAULT (15 %)** removes the saved override and follows the recommended default.
+Moving the slider saves a custom value; changing other settings does not freeze an inherited default.
+Upgrade behavior is **HARDWARE-UNVERIFIED**.
+
 ## Hardware checklist
 
 Checks to run on the real Tello EDU + phone. Ticked only when the owner reports a successful test
@@ -73,6 +78,7 @@ Props off first, then open space. Status mirrors the "Hardware" column of the [R
 - [ ] Sticks released: HUD indicator dots grey and centered (no controller drift above the dead-zone)
 - [ ] Controller switched off while pushing a stick → command back to neutral
 - [ ] Y cycles Slow / Normal / Sport and the difference is felt
+- [ ] Upgrade with saved 8 %: value stays 8 % until USE DEFAULT is selected; then 15 % survives restart and resting sticks give neutral RC (HARDWARE-UNVERIFIED)
 - [ ] Dead-zone slider changes stick feel
 - [ ] Touch sticks appear without a controller and fly correctly
 - [ ] With the controller connected, touch sticks are greyed and do nothing until dragged; dragging one takes over (notice), releasing gives control back
